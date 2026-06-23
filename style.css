@@ -1,0 +1,136 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Arial', sans-serif;
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    color: #fff;
+}
+
+#gameContainer {
+    display: flex;
+    gap: 20px;
+    max-width: 1200px;
+    width: 90%;
+}
+
+#gameScreen {
+    flex: 1;
+    background: #000;
+    border: 3px solid #ffff00;
+    border-radius: 10px;
+    box-shadow: 0 0 20px rgba(255, 255, 0, 0.5);
+    overflow: hidden;
+}
+
+#gameCanvas {
+    display: block;
+    width: 100%;
+    height: auto;
+}
+
+#ui {
+    flex: 0 0 250px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+#stats {
+    background: rgba(0, 0, 0, 0.7);
+    border: 2px solid #ffff00;
+    border-radius: 10px;
+    padding: 15px;
+    font-size: 16px;
+}
+
+.stat {
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(255, 255, 0, 0.3);
+    display: flex;
+    justify-content: space-between;
+}
+
+.stat:last-child {
+    border-bottom: none;
+}
+
+#gameStatus {
+    background: rgba(0, 0, 0, 0.7);
+    border: 2px solid #ffff00;
+    border-radius: 10px;
+    padding: 15px;
+    text-align: center;
+}
+
+#gameTitle {
+    font-size: 20px;
+    color: #ffff00;
+    margin-bottom: 10px;
+    text-shadow: 0 0 10px rgba(255, 255, 0, 0.8);
+    font-weight: bold;
+}
+
+#gameMessage {
+    font-size: 14px;
+    color: #fff;
+    margin: 10px 0;
+    min-height: 40px;
+    line-height: 1.4;
+}
+
+#controls {
+    background: rgba(0, 0, 0, 0.7);
+    border: 2px solid #ffff00;
+    border-radius: 10px;
+    padding: 15px;
+    text-align: center;
+}
+
+.btn {
+    background: linear-gradient(135deg, #ffff00 0%, #ffdd00 100%);
+    color: #000;
+    border: none;
+    padding: 10px 20px;
+    font-size: 16px;
+    font-weight: bold;
+    border-radius: 5px;
+    cursor: pointer;
+    margin: 10px 0;
+    width: 100%;
+    transition: all 0.3s;
+    text-transform: uppercase;
+}
+
+.btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 15px rgba(255, 255, 0, 0.8);
+}
+
+.btn:active {
+    transform: scale(0.95);
+}
+
+.controlText {
+    font-size: 12px;
+    color: #aaa;
+    margin-top: 10px;
+    line-height: 1.4;
+}
+
+@media (max-width: 900px) {
+    #gameContainer {
+        flex-direction: column;
+    }
+    
+    #ui {
+        flex: 1;
+    }
+}
