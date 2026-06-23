@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Illegal Lemon Empire - Quick Play</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: Arial, sans-serif;
+            background: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            color: #fff;
+        }
+        #container {
+            text-align: center;
+            background: rgba(255, 255, 0, 0.1);
+            border: 3px solid #ffff00;
+            padding: 40px;
+            border-radius: 10px;
+        }
+        h1 { color: #ffff00; margin-bottom: 20px; text-shadow: 0 0 10px #ffff00; }
+        button {
+            background: #ffff00;
+            color: #000;
+            border: none;
+            padding: 15px 40px;
+            font-size: 18px;
+            font-weight: bold;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px;
+            transition: all 0.3s;
+        }
+        button:hover { transform: scale(1.1); box-shadow: 0 0 20px #ffff00; }
+        p { margin: 15px 0; font-size: 16px; }
+        .code { 
+            background: #111;
+            border: 1px solid #ffff00;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: monospace;
+            margin: 20px 0;
+            text-align: left;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <h1>🍋 ILLEGAL LEMON EMPIRE 🍋</h1>
+        <p>Click below to play the game in full screen</p>
+        
+        <button onclick="playGame()">▶️ PLAY NOW</button>
+        
+        <p style="margin-top: 30px; font-size: 14px; color: #aaa;">
+            <strong>Or run locally:</strong>
+        </p>
+        <div class="code">
+git clone https://github.com/spedsilver/Sour-Money.git<br>
+cd Sour-Money<br>
+npx http-server<br>
+(Then open http://localhost:8080)
+        </div>
+        
+        <p style="margin-top: 20px; font-size: 12px;">
+            💰 Buy lemons | 🍋 Sell for profit | 👮 Avoid police | 🚀 Build your empire!
+        </p>
+    </div>
+
+    <script>
+        function playGame() {
+            // Create a popup window with the game
+            const gameWindow = window.open('', 'LemonGame', 'width=1000,height=700');
+            gameWindow.document.write(`
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>Illegal Lemon Empire</title>
+                    <link rel="stylesheet" href="style.css">
+                </head>
+                <body>
+                    <div id="gameContainer">
+                        <div id="gameScreen">
+                            <canvas id="gameCanvas" width="800" height="600"></canvas>
+                        </div>
+                        <div id="ui">
+                            <div id="stats">
+                                <div class="stat">💰 Money: $<span id="money">0</span></div>
+                                <div class="stat">🍋 Lemons: <span id="lemons">0</span></div>
+                                <div class="stat">⚠️ Heat: <span id="heat">0</span>%</div>
+                                <div class="stat">👮 Police: <span id="policeDistance">Clear</span></div>
+                            </div>
+                            <div id="gameStatus">
+                                <h1 id="gameTitle">ILLEGAL LEMON EMPIRE</h1>
+                                <p id="gameMessage">Click to start!</p>
+                            </div>
+                            <div id="controls">
+                                <button id="startBtn" class="btn">START GAME</button>
+                                <button id="restartBtn" class="btn" style="display:none;">RESTART</button>
+                                <p class="controlText">WASD/Arrows to move • SPACE to sell • Click to buy lemons</p>
+                            </div>
+                        </div>
+                    </div>
+                    <script src="game.js"><\/script>
+                </body>
+                </html>
+            `);
+        }
+    </script>
+</body>
+</html>
