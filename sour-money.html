@@ -109,12 +109,12 @@
 <body>
 <div class="game">
   <h1>Sour Money</h1>
-  <div class="sub" id="daycount">Day 1 of 20</div>
+  <div class="sub" id="daycount">Day 1</div>
 
   <div class="row">
     <div class="stat"><div class="lbl">Cash</div><div class="val" id="cash">$0</div></div>
     <div class="stat"><div class="lbl">Stash</div><div class="val" id="stash">0</div></div>
-    <div class="stat"><div class="lbl">Strikes</div><div class="val" id="strikes">0 / 3</div></div>
+    <div class="stat"><div class="lbl">Streak</div><div class="val" id="strikes">0</div></div>
   </div>
 
   <div class="heatbox">
@@ -175,9 +175,9 @@
 
 <div class="overlay hidden" id="endOverlay">
   <div class="modal endcard">
-    <h2 id="endTitle">GAME OVER</h2>
+    <h2 id="endTitle">BUSTED</h2>
     <div class="cash" id="endCash">$0</div>
-    <p id="endText"></p>
+    <p id="endText">One strike and you're done. Time to start over.</p>
     <button id="restartBtn">Play again</button>
   </div>
 </div>
@@ -191,9 +191,8 @@ const LOCATIONS = [
   {name:"The Wedge",      base:27, risk:1.5},
   {name:"Black Market",   base:34, risk:1.0, isBlackMarket:true},
 ];
-const MAX_DAYS = 20;
 const CAPACITY = 100;
-const MAX_STRIKES = 3;
+const MAX_STRIKES = 1;
 
 const CUSTOMER_NAMES = [
   "Big Rind", "Sour Sally", "The Juicer", "Mama Zest", "Citrus Sal",
@@ -271,10 +270,10 @@ function addLog(msg){
 function fmt(n){ return "$" + Math.round(n).toLocaleString(); }
 
 function render(){
-  document.getElementById('daycount').textContent = `Day ${state.day} of ${MAX_DAYS}`;
+  document.getElementById('daycount').textContent = `Day ${state.day}`;
   document.getElementById('cash').textContent = fmt(state.cash);
   document.getElementById('stash').textContent = `${state.stash} / ${getCapacity()}`;
-  document.getElementById('strikes').textContent = `${state.strikes} / ${MAX_STRIKES}`;
+  document.getElementById('strikes').textContent = state.day - 1;
   document.getElementById('heatnum').textContent = Math.round(state.heat);
 
   const shredWrap = document.getElementById('shreds');
@@ -479,8 +478,6 @@ function travel(i){
   const chance = Math.min(0.6, (state.heat/150) * destRisk);
   addLog(`Traveled to ${LOCATIONS[i].name}.`);
 
-  if(state.day > MAX_DAYS){ render(); endGame(false); return; }
-
   if(Math.random() < chance){
     showCopEvent();
   } else {
@@ -518,7 +515,6 @@ function resolveCop(choice){
   }
   render();
   if(state.strikes >= MAX_STRIKES){ endGame(true); return; }
-  if(state.day > MAX_DAYS){ endGame(false); }
 }
 
 let run = null;
@@ -645,12 +641,12 @@ function endRunGame(success){
       addLog(`Caught! ${lost} lemons confiscated, but you flash a strike pass and walk.`);
     } else {
       state.strikes += 1;
-      addLog(`Caught! ${lost} lemons confiscated. Strike ${state.strikes}/${MAX_STRIKES}.`);
+      addLog(`Caught! ${lost} lemons confiscated. Game over.`);
+      endGame(true);
+      return;
     }
   }
   render();
-  if(state.strikes >= MAX_STRIKES){ endGame(true); return; }
-  if(state.day > MAX_DAYS){ endGame(false); }
 }
 
 document.addEventListener('keydown', (e) => {
@@ -664,11 +660,9 @@ document.getElementById('runRightBtn').onclick = () => moveLane(1);
 document.getElementById('runJumpBtn').onclick = jump;
 
 function endGame(jailed){
-  document.getElementById('endTitle').textContent = jailed ? "BUSTED" : "GAME OVER";
+  document.getElementById('endTitle').textContent = "BUSTED";
   document.getElementById('endCash').textContent = fmt(state.cash);
-  document.getElementById('endText').textContent = jailed
-    ? "Three strikes and Zest Enforcement hauls you in. Final cash on hand:"
-    : `Twenty days on the streets. Final cash on hand:`;
+  document.getElementById('endText').textContent = "One strike and you're done. Time to start over.";
   document.getElementById('endOverlay').classList.remove('hidden');
 }
 
