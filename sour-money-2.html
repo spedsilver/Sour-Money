@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Sour Money</title>
+<style>
+  :root{
+    --bg:#1a1625; --panel:#241f33; --panel2:#2d2740; --border:#3a3350;
+    --yellow:#f4e04d; --yellow-dim:#c9b93e; --red:#e6484f; --teal:#4ecdc4;
+    --text:#ede8f5; --text2:#a89fc2;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:var(--bg); color:var(--text);
+    font-family:'Segoe UI', Arial, sans-serif; min-height:100vh;
+    display:flex; justify-content:center; padding:24px 12px;
+  }
+  .game{width:100%; max-width:560px;}
+  h1{
+    font-family:Impact,'Arial Narrow',sans-serif; letter-spacing:3px;
+    color:var(--yellow); font-size:32px; margin:0; text-transform:uppercase;
+  }
+  .sub{color:var(--text2); font-size:13px; margin:2px 0 18px; letter-spacing:1px;}
+  .row{display:flex; gap:10px;}
+  .stat{
+    flex:1; background:var(--panel); border:1px solid var(--border);
+    border-radius:6px; padding:10px 12px;
+  }
+  .stat .lbl{font-size:11px; color:var(--text2); letter-spacing:1px; text-transform:uppercase;}
+  .stat .val{font-family:'Consolas','SF Mono',monospace; font-size:20px; margin-top:2px;}
+  .heatbox{
+    background:var(--panel); border:1px solid var(--border); border-radius:6px;
+    padding:10px 12px; margin-top:10px;
+  }
+  .heatlbl{display:flex; justify-content:space-between; font-size:11px; color:var(--text2);
+    letter-spacing:1px; text-transform:uppercase; margin-bottom:6px;}
+  .shreds{display:flex; gap:2px; height:22px;}
+  .shred{
+    flex:1; background:#3a3350; transform:skewX(-18deg);
+    border-radius:1px; transition:background .2s;
+  }
+  .panel{
+    background:var(--panel); border:1px solid var(--border); border-radius:6px;
+    padding:14px; margin-top:14px;
+  }
+  .panel h3{margin:0 0 4px; font-size:16px; color:var(--yellow);}
+  .price{font-family:'Consolas',monospace; color:var(--teal); font-size:14px; margin-bottom:10px;}
+  .controls{display:flex; gap:8px; align-items:center;}
+  input[type=number]{
+    width:70px; background:var(--panel2); border:1px solid var(--border);
+    color:var(--text); border-radius:4px; padding:7px; font-family:'Consolas',monospace;
+  }
+  button{
+    background:var(--panel2); border:1px solid var(--border); color:var(--text);
+    border-radius:4px; padding:8px 14px; cursor:pointer; font-size:13px;
+    font-weight:bold; letter-spacing:.5px;
+  }
+  button:hover{border-color:var(--yellow);}
+  button:disabled{opacity:.4; cursor:not-allowed;}
+  .buy{color:var(--teal);} .sell{color:var(--yellow);}
+  .custlist{display:flex; flex-direction:column; gap:8px; margin-top:10px;}
+  .cust{
+    display:flex; justify-content:space-between; align-items:center; gap:10px;
+    background:var(--panel2); border:1px solid var(--border); border-radius:6px;
+    padding:9px 12px;
+  }
+  .cust.served{opacity:.4;}
+  .cust .cname{font-weight:bold; font-size:13px;}
+  .cust .cflavor{font-size:11px; color:var(--text2); margin-top:2px;}
+  .cust .coffer{font-family:'Consolas',monospace; font-size:13px; color:var(--teal); white-space:nowrap;}
+  .cust button{white-space:nowrap;}
+  .locs{display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:14px;}
+  .loc{
+    background:var(--panel); border:1px solid var(--border); border-radius:6px;
+    padding:10px; cursor:pointer; text-align:left;
+  }
+  .loc:hover{border-color:var(--yellow);}
+  .loc.here{border-color:var(--teal); opacity:.5; cursor:default;}
+  .loc .lname{font-weight:bold; font-size:13px;}
+  .loc .lrisk{font-size:11px; color:var(--text2); margin-top:2px;}
+  .log{
+    margin-top:14px; background:var(--panel); border:1px solid var(--border);
+    border-radius:6px; padding:10px 12px; max-height:130px; overflow-y:auto;
+    font-family:'Consolas',monospace; font-size:12px; color:var(--text2);
+  }
+  .log div{padding:2px 0; border-bottom:1px solid var(--border);}
+  .log div:last-child{border-bottom:none;}
+  .overlay{
+    position:fixed; inset:0; background:rgba(0,0,0,.7); display:flex;
+    align-items:center; justify-content:center; padding:20px; z-index:10;
+  }
+  .modal{
+    background:var(--panel); border:1px solid var(--red); border-radius:8px;
+    padding:22px; max-width:380px; text-align:center;
+  }
+  .modal h2{color:var(--red); margin:0 0 8px; letter-spacing:1px;}
+  .modal p{color:var(--text2); font-size:14px; margin-bottom:18px;}
+  .modal button{width:100%; margin-bottom:8px;}
+  .endcard{text-align:center; padding:30px 14px;}
+  .endcard .cash{font-family:'Consolas',monospace; font-size:36px; color:var(--yellow); margin:10px 0;}
+  .hidden{display:none;}
+  .runstats{display:flex; justify-content:space-between; font-family:'Consolas',monospace;
+    font-size:13px; color:var(--text2); margin-bottom:8px;}
+  #runCanvas{background:#0f0c18; border:1px solid var(--border); border-radius:6px; display:block; margin:0 auto;}
+  .runbtns{display:flex; justify-content:center; gap:8px; margin-top:10px;}
+  .runbtns button{width:auto; flex:1; margin-bottom:0;}
+</style>
+</head>
+<body>
+<div class="game">
+  <h1>Sour Money</h1>
+  <div class="sub" id="daycount">Day 1 of 20</div>
+
+  <div class="row">
+    <div class="stat"><div class="lbl">Cash</div><div class="val" id="cash">$0</div></div>
+    <div class="stat"><div class="lbl">Stash</div><div class="val" id="stash">0</div></div>
+    <div class="stat"><div class="lbl">Strikes</div><div class="val" id="strikes">0 / 3</div></div>
+  </div>
+
+  <div class="heatbox">
+    <div class="heatlbl"><span>Heat</span><span id="heatnum">0</span></div>
+    <div class="shreds" id="shreds"></div>
+  </div>
+
+  <div class="panel" id="tradepanel">
+    <h3 id="locname"></h3>
+    <div class="price" id="priceline"></div>
+    <div class="controls">
+      <input type="number" id="qty" min="1" value="10">
+      <button class="buy" id="buyBtn">Buy</button>
+      <button class="sell" id="sellBtn">Sell</button>
+    </div>
+  </div>
+
+  <div class="panel" id="custpanel">
+    <h3>Customers</h3>
+    <div class="custlist" id="custlist"></div>
+  </div>
+
+  <div class="panel hidden" id="upgradespanel">
+    <h3>Black market</h3>
+    <div class="custlist" id="upgradeslist"></div>
+  </div>
+
+  <div class="locs" id="locs"></div>
+  <div class="log" id="log"></div>
+</div>
+
+<div class="overlay hidden" id="copOverlay">
+  <div class="modal">
+    <h2>ZEST ENFORCEMENT</h2>
+    <p id="copText">A patrol just clocked your stash.</p>
+    <button id="runBtn">Run for it</button>
+    <button id="bribeBtn">Slip a bribe</button>
+    <button id="hideBtn">Toss the stash</button>
+  </div>
+</div>
+
+<div class="overlay hidden" id="runOverlay">
+  <div class="modal" style="max-width:340px;">
+    <h2 style="color:var(--yellow);">MAKE A BREAK FOR IT</h2>
+    <p id="runCopLabel" style="color:var(--red); font-weight:bold;"></p>
+    <p>&larr; &rarr; to dodge crates, &uarr; to hop the barriers.</p>
+    <div class="runstats">
+      <span id="runLives">Lives: ♥♥♥</span>
+      <span id="runDist">0%</span>
+    </div>
+    <canvas id="runCanvas" width="300" height="420"></canvas>
+    <div class="runbtns">
+      <button id="runLeftBtn">&larr;</button>
+      <button id="runJumpBtn">Jump</button>
+      <button id="runRightBtn">&rarr;</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay hidden" id="endOverlay">
+  <div class="modal endcard">
+    <h2 id="endTitle">GAME OVER</h2>
+    <div class="cash" id="endCash">$0</div>
+    <p id="endText"></p>
+    <button id="restartBtn">Play again</button>
+  </div>
+</div>
+
+<script>
+const LOCATIONS = [
+  {name:"Sourside Docks", base:8,  risk:0.6},
+  {name:"Pulp Heights",   base:14, risk:0.8},
+  {name:"Zestbridge",     base:20, risk:1.0},
+  {name:"Rind Row",       base:17, risk:1.0},
+  {name:"The Wedge",      base:27, risk:1.5},
+  {name:"Black Market",   base:34, risk:2.5, isBlackMarket:true},
+];
+const MAX_DAYS = 20;
+const CAPACITY = 100;
+const MAX_STRIKES = 1;
+
+const CUSTOMER_NAMES = [
+  "Big Rind", "Sour Sally", "The Juicer", "Mama Zest", "Citrus Sal",
+  "Pulp Pete", "Wedge Wendy", "Old Man Acid", "Tart Tony", "Peel Paulie",
+  "Squeeze Lou", "Auntie Marmalade", "Rind Ronnie", "Zesty Z", "Lemon Larry"
+];
+const FLAVORS = [
+  "Says it's for a juice cleanse.",
+  "Buying in bulk, no questions asked.",
+  "Offers top dollar, seems a little too eager.",
+  "Wants them for a 'family recipe'.",
+  "Haggard, smells like an all-nighter.",
+  "Claims it's for a restaurant order.",
+  "Nervous, keeps checking the street.",
+  "Regular face around these parts.",
+  "New in town, asking a lot of questions.",
+  "Pays in small bills, won't make eye contact."
+];
+
+function genCustomers(price, heat, isBlackMarket){
+  const count = isBlackMarket ? 3 + Math.floor(Math.random()*2) : 2 + Math.floor(Math.random()*2);
+  const customers = [];
+  const usedNames = new Set();
+  for(let i=0;i<count;i++){
+    let name;
+    do{ name = CUSTOMER_NAMES[Math.floor(Math.random()*CUSTOMER_NAMES.length)]; }
+    while(usedNames.has(name));
+    usedNames.add(name);
+    const mult = isBlackMarket ? 1.1 + Math.random()*0.9 : 0.8 + Math.random()*0.8;
+    const qty = isBlackMarket ? 10 + Math.floor(Math.random()*31) : 5 + Math.floor(Math.random()*21);
+    const flavor = FLAVORS[Math.floor(Math.random()*FLAVORS.length)];
+    let copChance = 0.05 + heat/400 + (mult > 1.3 ? 0.08 : 0);
+    copChance = Math.min(0.35, copChance);
+    customers.push({
+      name, flavor, qty,
+      price: Math.round(price*mult),
+      isCop: Math.random() < copChance,
+      served: false
+    });
+  }
+  return customers;
+}
+
+let state;
+
+function freshPrices(heat){
+  const h = heat || 0;
+  return LOCATIONS.map(l => {
+    const price = Math.round(l.base * (0.7 + Math.random()*0.6));
+    const customers = genCustomers(price, h, !!l.isBlackMarket);
+    return { name: l.name, risk: l.risk, price, customers, isBlackMarket: !!l.isBlackMarket };
+  });
+}
+
+function getCapacity(){
+  return CAPACITY + state.upgrades.biggerStashLvl*20;
+}
+
+function newGame(){
+  state = {
+    cash: 500, stash: 0, day: 1, heat: 0, strikes: 0,
+    locIndex: 0, prices: null, log: [],
+    upgrades: { biggerStashLvl: 0, silkRunner: false, heatSink: false, strikePasses: 0 }
+  };
+  state.prices = freshPrices(0);
+  addLog("You step onto the docks with $500 and a dream.");
+  render();
+}
+
+function addLog(msg){
+  state.log.unshift(msg);
+  if(state.log.length > 30) state.log.pop();
+}
+
+function fmt(n){ return "$" + Math.round(n).toLocaleString(); }
+
+function render(){
+  document.getElementById('daycount').textContent = `Day ${state.day} of ${MAX_DAYS}`;
+  document.getElementById('cash').textContent = fmt(state.cash);
+  document.getElementById('stash').textContent = `${state.stash} / ${getCapacity()}`;
+  document.getElementById('strikes').textContent = `${state.strikes} / ${MAX_STRIKES}`;
+  document.getElementById('heatnum').textContent = Math.round(state.heat);
+
+  const shredWrap = document.getElementById('shreds');
+  shredWrap.innerHTML = "";
+  const filled = Math.round(state.heat/5);
+  for(let i=0;i<20;i++){
+    const d = document.createElement('div');
+    d.className = 'shred';
+    if(i < filled){
+      const t = i/20;
+      d.style.background = t < 0.6 ? 'var(--yellow-dim)' : 'var(--red)';
+    }
+    shredWrap.appendChild(d);
+  }
+
+  const here = state.prices[state.locIndex];
+  document.getElementById('locname').textContent = here.name;
+  document.getElementById('priceline').textContent = here.isBlackMarket
+    ? `Premium price: ${fmt(here.price)} each — dealing in the open here doubles your risk.`
+    : `Lemons going for ${fmt(here.price)} each`;
+
+  const custpanelEl = document.getElementById('custpanel');
+  const upgradespanelEl = document.getElementById('upgradespanel');
+  custpanelEl.classList.remove('hidden');
+  if(here.isBlackMarket){
+    upgradespanelEl.classList.remove('hidden');
+    renderUpgrades();
+  } else {
+    upgradespanelEl.classList.add('hidden');
+  }
+
+  const custEl = document.getElementById('custlist');
+  custEl.innerHTML = "";
+  here.customers.forEach((c, i) => {
+    const div = document.createElement('div');
+    div.className = 'cust' + (c.served ? ' served' : '');
+    const total = c.qty * c.price;
+    const canServe = !c.served && state.stash >= c.qty;
+    div.innerHTML = `
+      <div>
+        <div class="cname">${c.name} <span class="coffer">wants ${c.qty}</span></div>
+        <div class="cflavor">${c.served ? 'Deal done.' : c.flavor}</div>
+      </div>
+      <div style="text-align:right;">
+        <div class="coffer">${fmt(total)}</div>
+      </div>`;
+    if(!c.served){
+      const btn = document.createElement('button');
+      btn.className = 'sell';
+      btn.textContent = 'Sell';
+      btn.disabled = !canServe;
+      btn.onclick = () => sellToCustomer(i);
+      div.lastElementChild.appendChild(btn);
+    }
+    custEl.appendChild(div);
+  });
+
+  const locsEl = document.getElementById('locs');
+  locsEl.innerHTML = "";
+  state.prices.forEach((l, i) => {
+    const div = document.createElement('div');
+    div.className = 'loc' + (i === state.locIndex ? ' here' : '');
+    if(l.isBlackMarket) div.style.borderColor = 'var(--red)';
+    const tagText = l.isBlackMarket ? 'Black market' : 'Travel';
+    div.innerHTML = `<div class="lname">${l.name}</div><div class="lrisk">${i===state.locIndex ? 'You are here' : tagText+' · risk x'+l.risk}</div>`;
+    if(i !== state.locIndex) div.onclick = () => travel(i);
+    locsEl.appendChild(div);
+  });
+
+  const logEl = document.getElementById('log');
+  logEl.innerHTML = state.log.map(m => `<div>${m}</div>`).join("");
+}
+
+function renderUpgrades(){
+  const wrap = document.getElementById('upgradeslist');
+  wrap.innerHTML = "";
+
+  const items = [];
+  const stashLvl = state.upgrades.biggerStashLvl;
+  items.push({
+    name: "Bigger stash",
+    desc: stashLvl >= 3 ? "Maxed out at +60 capacity." : `+20 stash capacity (level ${stashLvl}/3).`,
+    cost: stashLvl >= 3 ? null : 700 + stashLvl*500,
+    owned: stashLvl >= 3,
+    action: () => { state.upgrades.biggerStashLvl += 1; addLog("Your stash just got roomier."); }
+  });
+  items.push({
+    name: "Quick hands",
+    desc: "Every deal draws 30% less heat.",
+    cost: 900, owned: state.upgrades.silkRunner,
+    action: () => { state.upgrades.silkRunner = true; addLog("You've got quick hands now."); }
+  });
+  items.push({
+    name: "Heat sink",
+    desc: "Heat cools twice as fast between stops.",
+    cost: 850, owned: state.upgrades.heatSink,
+    action: () => { state.upgrades.heatSink = true; addLog("You picked up a heat sink."); }
+  });
+  items.push({
+    name: "Strike pass",
+    desc: `Cancels your next strike if you're caught. Holding ${state.upgrades.strikePasses}.`,
+    cost: 1200 + state.upgrades.strikePasses*600, owned: false,
+    action: () => { state.upgrades.strikePasses += 1; addLog("You tuck a strike pass into your jacket."); }
+  });
+
+  items.forEach(item => {
+    const div = document.createElement('div');
+    div.className = 'cust' + (item.owned ? ' served' : '');
+    div.innerHTML = `
+      <div>
+        <div class="cname">${item.name}</div>
+        <div class="cflavor">${item.desc}</div>
+      </div>
+      <div style="text-align:right;"></div>`;
+    if(item.owned){
+      div.lastElementChild.textContent = 'Owned';
+    } else {
+      const btn = document.createElement('button');
+      btn.className = 'sell';
+      btn.textContent = fmt(item.cost);
+      btn.disabled = state.cash < item.cost;
+      btn.onclick = () => {
+        state.cash -= item.cost;
+        item.action();
+        render();
+      };
+      div.lastElementChild.appendChild(btn);
+    }
+    wrap.appendChild(div);
+  });
+}
+
+function getQty(){
+  const q = parseInt(document.getElementById('qty').value, 10);
+  return isNaN(q) || q < 1 ? 1 : q;
+}
+
+function buy(){
+  const q = getQty();
+  const here = state.prices[state.locIndex];
+  const cost = q * here.price;
+  if(state.stash + q > getCapacity()){ addLog("Your stash can't hold that many lemons."); render(); return; }
+  if(cost > state.cash){ addLog("You can't afford that many lemons."); render(); return; }
+  const heatFactor = state.upgrades.silkRunner ? 0.7 : 1;
+  state.cash -= cost;
+  state.stash += q;
+  state.heat = Math.min(100, state.heat + q*0.15*heatFactor);
+  addLog(`Bought ${q} lemons for ${fmt(cost)}.`);
+  render();
+}
+
+function sell(){
+  const q = getQty();
+  const here = state.prices[state.locIndex];
+  if(q > state.stash){ addLog("You don't have that many lemons to sell."); render(); return; }
+  const revenue = q * here.price;
+  const heatFactor = state.upgrades.silkRunner ? 0.7 : 1;
+  state.cash += revenue;
+  state.stash -= q;
+  state.heat = Math.min(100, state.heat + q*(here.isBlackMarket ? 0.7 : 0.35)*heatFactor);
+  addLog(`Sold ${q} lemons for ${fmt(revenue)}.`);
+  render();
+  if(here.isBlackMarket){
+    const chance = Math.min(0.6, (0.08 + state.heat/200)*2);
+    if(Math.random() < chance){
+      showCopEvent("Dealing out in the open at the Black Market gets you noticed.");
+    }
+  }
+}
+
+function sellToCustomer(i){
+  const here = state.prices[state.locIndex];
+  const c = here.customers[i];
+  if(c.served) return;
+  if(state.stash < c.qty){ addLog("You don't have enough lemons to fill that order."); render(); return; }
+
+  if(c.isCop){
+    c.served = true;
+    addLog(`${c.name} flashes a badge — it was a setup!`);
+    showCopEvent(`${c.name} wasn't a customer at all.`);
+    return;
+  }
+
+  const revenue = c.qty * c.price;
+  const heatFactor = state.upgrades.silkRunner ? 0.7 : 1;
+  state.cash += revenue;
+  state.stash -= c.qty;
+  state.heat = Math.min(100, state.heat + c.qty*0.25*heatFactor);
+  c.served = true;
+  addLog(`${c.name} took ${c.qty} lemons off your hands for ${fmt(revenue)}.`);
+  render();
+}
+
+function travel(i){
+  state.locIndex = i;
+  state.day += 1;
+  const decay = state.upgrades.heatSink ? 16 : 8;
+  state.heat = Math.max(0, state.heat - decay);
+  state.prices = freshPrices(state.heat);
+  const destRisk = LOCATIONS[i].risk;
+  const chance = Math.min(0.6, (state.heat/150) * destRisk);
+  addLog(`Traveled to ${LOCATIONS[i].name}.`);
+
+  if(state.day > MAX_DAYS){ render(); endGame(false); return; }
+
+  if(Math.random() < chance){
+    showCopEvent();
+  } else {
+    render();
+  }
+}
+
+const COP_TYPES = [
+  {name:"Rookie Officer",     speedMult:0.75, bribeMult:0.6, lives:4, weight:4},
+  {name:"Beat Cop",           speedMult:1.0,  bribeMult:1.0, lives:3, weight:4},
+  {name:"Veteran Detective",  speedMult:1.25, bribeMult:1.5, lives:3, weight:2},
+  {name:"Captain Zest",       speedMult:1.5,  bribeMult:2.0, lives:2, weight:1},
+];
+
+function pickCopType(){
+  const pool = state.heat > 70 ? COP_TYPES.slice(1) : COP_TYPES;
+  const total = pool.reduce((s,c) => s+c.weight, 0);
+  let r = Math.random()*total;
+  for(const c of pool){ if(r < c.weight) return c; r -= c.weight; }
+  return pool[0];
+}
+
+function getBribeCost(){
+  const mult = state.currentCop ? state.currentCop.bribeMult : 1;
+  return Math.round((state.heat*5 + 50 + state.stash*4) * mult);
+}
+
+function showCopEvent(customText){
+  state.currentCop = pickCopType();
+  const base = customText ||
+    (state.stash > 0
+      ? `A patrol spots ${state.stash} lemons in your bag.`
+      : `A patrol stops you, but your bag looks clean.`);
+  document.getElementById('copText').textContent = `${state.currentCop.name}. ${base}`;
+  const bribeCost = getBribeCost();
+  const bribeBtn = document.getElementById('bribeBtn');
+  bribeBtn.textContent = `Slip a bribe (${fmt(bribeCost)})`;
+  bribeBtn.disabled = state.cash < bribeCost;
+  document.getElementById('copOverlay').classList.remove('hidden');
+}
+
+function resolveCop(choice){
+  document.getElementById('copOverlay').classList.add('hidden');
+  if(choice === 'bribe'){
+    const bribeCost = getBribeCost();
+    state.cash -= bribeCost;
+    state.heat = Math.max(0, state.heat - 20);
+    addLog(`Paid ${fmt(bribeCost)} to look the other way.`);
+  } else if(choice === 'hide'){
+    addLog(`You dump all ${state.stash} lemons in a storm drain.`);
+    state.stash = 0;
+    state.heat = Math.max(0, state.heat - 15);
+  }
+  render();
+  if(state.strikes >= MAX_STRIKES){ endGame(true); return; }
+  if(state.day > MAX_DAYS){ endGame(false); }
+}
+
+let run = null;
+
+function startRunGame(){
+  document.getElementById('copOverlay').classList.add('hidden');
+  const cop = state.currentCop || pickCopType();
+  document.getElementById('runCopLabel').textContent = `${cop.name} is on you.`;
+  run = {
+    lane: 1, jumping:false, jumpT:0, lives:cop.lives, maxLives:cop.lives,
+    obstacles: [], distance:0, target:1300,
+    speed: 150*cop.speedMult, copSpeedMult: cop.speedMult, elapsed:0,
+    spawnTimer:0, last:null, active:true
+  };
+  document.getElementById('runOverlay').classList.remove('hidden');
+  updateRunHud();
+  drawRun();
+  requestAnimationFrame(runLoop);
+}
+
+function updateRunHud(){
+  document.getElementById('runLives').textContent = 'Lives: ' + '♥'.repeat(run.lives) + '♡'.repeat(run.maxLives-run.lives);
+  document.getElementById('runDist').textContent = Math.min(100, Math.round(run.distance/run.target*100)) + '%';
+}
+
+function spawnObstacle(){
+  const lane = Math.floor(Math.random()*3);
+  const type = Math.random() < 0.5 ? 'crate' : 'log';
+  run.obstacles.push({lane, type, y:-40, hit:false});
+}
+
+function runLoop(ts){
+  if(!run || !run.active) return;
+  if(run.last === null) run.last = ts;
+  const dt = Math.min(0.05, (ts-run.last)/1000);
+  run.last = ts;
+  run.elapsed += dt;
+
+  run.speed = Math.min(550, (150 + state.heat*1.5 + run.elapsed*12) * run.copSpeedMult);
+  run.distance += run.speed*dt;
+
+  run.spawnTimer += dt*1000;
+  const interval = Math.max(260, 480 - run.elapsed*14);
+  if(run.spawnTimer > interval){
+    run.spawnTimer = 0;
+    spawnObstacle();
+  }
+
+  if(run.jumping){
+    run.jumpT += dt;
+    if(run.jumpT > 0.5){ run.jumping = false; run.jumpT = 0; }
+  }
+
+  const playerY = 350;
+  for(let i=run.obstacles.length-1;i>=0;i--){
+    const o = run.obstacles[i];
+    o.y += run.speed*dt;
+    if(!o.hit && o.y > playerY && o.y < playerY+50 && o.lane === run.lane){
+      if(!(o.type === 'log' && run.jumping)){
+        o.hit = true;
+        run.lives -= 1;
+        if(run.lives <= 0){ endRunGame(false); return; }
+      }
+    }
+    if(o.y > 460) run.obstacles.splice(i,1);
+  }
+
+  if(run.distance >= run.target){ endRunGame(true); return; }
+
+  drawRun();
+  updateRunHud();
+  requestAnimationFrame(runLoop);
+}
+
+function drawRun(){
+  const cv = document.getElementById('runCanvas');
+  const ctx = cv.getContext('2d');
+  ctx.clearRect(0,0,300,420);
+  ctx.fillStyle = '#0f0c18';
+  ctx.fillRect(0,0,300,420);
+  const laneX = [50,150,250];
+  ctx.strokeStyle = '#3a3350';
+  ctx.lineWidth = 1;
+  [100,200].forEach(x=>{ ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,420); ctx.stroke(); });
+
+  run.obstacles.forEach(o=>{
+    const x = laneX[o.lane];
+    if(o.type === 'crate'){
+      ctx.fillStyle = '#c9b93e';
+      ctx.fillRect(x-22, o.y-16, 44, 32);
+    } else {
+      ctx.fillStyle = '#e6484f';
+      ctx.fillRect(x-26, o.y-6, 52, 12);
+    }
+  });
+
+  const px = laneX[run.lane];
+  const py = 350 - (run.jumping ? 40*Math.sin(Math.PI*Math.min(1, run.jumpT/0.5)) : 0);
+  ctx.fillStyle = '#f4e04d';
+  ctx.beginPath();
+  ctx.ellipse(px, py, 16, 20, 0, 0, Math.PI*2);
+  ctx.fill();
+}
+
+function moveLane(dir){
+  if(!run || !run.active) return;
+  run.lane = Math.max(0, Math.min(2, run.lane+dir));
+}
+function jump(){
+  if(!run || !run.active) return;
+  if(!run.jumping){ run.jumping = true; run.jumpT = 0; }
+}
+
+function endRunGame(success){
+  run.active = false;
+  document.getElementById('runOverlay').classList.add('hidden');
+  if(success){
+    const hitsTaken = run.maxLives - run.lives;
+    state.heat = Math.min(100, state.heat + 10 + hitsTaken*5);
+    addLog(hitsTaken === 0 ? "Clean getaway. You lose them in the crowd." : "You shake the tail, but barely.");
+  } else {
+    const lost = Math.ceil(state.stash * (0.4 + Math.random()*0.3));
+    state.stash -= lost;
+    if(state.upgrades.strikePasses > 0){
+      state.upgrades.strikePasses -= 1;
+      addLog(`Caught! ${lost} lemons confiscated, but you flash a strike pass and walk.`);
+    } else {
+      state.strikes += 1;
+      addLog(`Caught! ${lost} lemons confiscated. Strike ${state.strikes}/${MAX_STRIKES}.`);
+    }
+  }
+  render();
+  if(state.strikes >= MAX_STRIKES){ endGame(true); return; }
+  if(state.day > MAX_DAYS){ endGame(false); }
+}
+
+document.addEventListener('keydown', (e) => {
+  if(!run || !run.active) return;
+  if(e.key === 'ArrowLeft'){ e.preventDefault(); moveLane(-1); }
+  else if(e.key === 'ArrowRight'){ e.preventDefault(); moveLane(1); }
+  else if(e.key === 'ArrowUp' || e.key === ' '){ e.preventDefault(); jump(); }
+});
+document.getElementById('runLeftBtn').onclick = () => moveLane(-1);
+document.getElementById('runRightBtn').onclick = () => moveLane(1);
+document.getElementById('runJumpBtn').onclick = jump;
+
+function endGame(jailed){
+  document.getElementById('endTitle').textContent = jailed ? "BUSTED" : "GAME OVER";
+  document.getElementById('endCash').textContent = fmt(state.cash);
+  document.getElementById('endText').textContent = jailed
+    ? "One strike and Zest Enforcement hauls you in. Final cash on hand:"
+    : `Twenty days on the streets. Final cash on hand:`;
+  document.getElementById('endOverlay').classList.remove('hidden');
+}
+
+document.getElementById('buyBtn').onclick = buy;
+document.getElementById('sellBtn').onclick = sell;
+document.getElementById('runBtn').onclick = startRunGame;
+document.getElementById('bribeBtn').onclick = () => resolveCop('bribe');
+document.getElementById('hideBtn').onclick = () => resolveCop('hide');
+document.getElementById('restartBtn').onclick = () => {
+  document.getElementById('endOverlay').classList.add('hidden');
+  newGame();
+};
+
+newGame();
+</script>
+</body>
+</html>
