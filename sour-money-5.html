@@ -137,6 +137,8 @@
       <button class="sell hidden" id="fenceBtn" style="width:100%;"></button>
       <button class="sell hidden" id="shopBtn" style="width:100%;">Visit the casino</button>
       <button class="sell hidden" id="growBtn" style="width:100%;"></button>
+      <button class="sell hidden" id="gardenerBtn" style="width:100%;"></button>
+      <button class="sell hidden" id="farmStashBtn" style="width:100%;"></button>
       <button class="sell hidden" id="dockBtn" style="width:100%;"></button>
     </div>
   </div>
@@ -376,7 +378,7 @@ function newGame(){
     cash: 500, stash: 0, day: 1, heat: 0, strikes: 0,
     locIndex: 0, prices: null, log: [],
     upgrades: { biggerStashLvl: 0, silkRunner: false, heatSink: false, strikePasses: 0, fortune: false, bonusCapacity: 0 },
-    farm: { planted: false, plantedAt: 0 },
+    farm: { planted: false, plantedAt: 0, stash: 0, gardenerHired: false },
     dock: { stock: 100, lastRestockAt: Date.now() }
   };
   state.prices = freshPrices(0);
@@ -436,7 +438,9 @@ function render(){
   updateDockButton();
 
   const specialEl = document.getElementById('specialline');
-  specialEl.textContent = here.specialLabel || "";
+  specialEl.textContent = here.special === 'grow'
+    ? `${here.specialLabel || ""} • Farm stash: ${state.farm.stash} lemon${state.farm.stash === 1 ? '' : 's'}`
+    : (here.specialLabel || "");
 
   const launderBtn = document.getElementById('launderBtn');
   launderBtn.classList.toggle('hidden', here.special !== 'chopShop');
@@ -652,10 +656,15 @@ function fenceStash(){
 
 const GROW_TIME_MS = 3 * 60 * 1000;
 const SEED_COST = 300;
+const GARDENER_COST = 1200;
+
+function rollFarmYield(){
+  return 1 + Math.floor(Math.random()*5);
+}
 
 function plantCrop(){
   const here = state.prices[state.locIndex];
-  if(here.special !== 'grow' || state.farm.planted) return;
+  if(here.special !== 'grow' || state.farm.planted || state.farm.gardenerHired) return;
   if(state.cash < SEED_COST){ addLog("Not enough cash for lemon seeds."); render(); return; }
   state.cash -= SEED_COST;
   state.farm.planted = true;
@@ -666,23 +675,102 @@ function plantCrop(){
 
 function harvestCrop(){
   const here = state.prices[state.locIndex];
-  if(here.special !== 'grow' || !state.farm.planted) return;
+  if(here.special !== 'grow' || !state.farm.planted || state.farm.gardenerHired) return;
   if(Date.now() - state.farm.plantedAt < GROW_TIME_MS) return;
-  const gain = Math.max(0, Math.min(getCapacity() - state.stash, 1 + Math.floor(Math.random()*5)));
-  state.stash += gain;
+  const gain = rollFarmYield();
+  state.farm.stash += gain;
   state.farm.planted = false;
-  addLog(gain > 0
-    ? `Harvested ${gain} lemon${gain>1?'s':''} off your crop. No heat, no risk.`
-    : "Crop's ready, but your stash is already full.");
+  addLog(`Harvested ${gain} lemon${gain>1?'s':''} into the farm stash.`);
   render();
+}
+
+function hireGardener(){
+  const here = state.prices[state.locIndex];
+  if(here.special !== 'grow' || state.farm.gardenerHired) return;
+  if(state.cash < GARDENER_COST){ addLog("Not enough cash to hire a gardener."); render(); return; }
+  state.cash -= GARDENER_COST;
+  state.farm.gardenerHired = true;
+  state.farm.planted = true;
+  state.farm.plantedAt = Date.now();
+  addLog(`Hired a farm gardener for ${fmt(GARDENER_COST)}. They now auto-plant and auto-harvest into your farm stash.`);
+  render();
+}
+
+function collectFarmStash(){
+  const here = state.prices[state.locIndex];
+  if(here.special !== 'grow') return;
+  if(state.farm.stash <= 0){ addLog("Farm stash is empty right now."); render(); return; }
+  const room = getCapacity() - state.stash;
+  if(room <= 0){ addLog("Your main stash is full. Sell some lemons first."); render(); return; }
+  const moved = Math.min(room, state.farm.stash);
+  state.stash += moved;
+  state.farm.stash -= moved;
+  addLog(`Moved ${moved} lemon${moved>1?'s':''} from the farm stash into your main stash.`);
+  render();
+}
+
+function runGardenerCycle(){
+  if(!state || !state.farm.gardenerHired) return false;
+  const now = Date.now();
+
+  if(!state.farm.planted){
+    state.farm.planted = true;
+    state.farm.plantedAt = now;
+    addLog("Your gardener planted a fresh lemon crop.");
+    return true;
+  }
+
+  if(now - state.farm.plantedAt < GROW_TIME_MS) return false;
+
+  const gain = rollFarmYield();
+  state.farm.stash += gain;
+  state.farm.planted = true;
+  state.farm.plantedAt = now;
+  addLog(`Your gardener harvested ${gain} lemon${gain>1?'s':''} into farm stash and replanted immediately.`);
+  return true;
 }
 
 function updateFarmButton(){
   if(!state) return;
   const here = state.prices[state.locIndex];
   const growBtn = document.getElementById('growBtn');
-  if(!here || here.special !== 'grow'){ growBtn.classList.add('hidden'); return; }
+  const gardenerBtn = document.getElementById('gardenerBtn');
+  const farmStashBtn = document.getElementById('farmStashBtn');
+
+  if(!here || here.special !== 'grow'){
+    growBtn.classList.add('hidden');
+    gardenerBtn.classList.add('hidden');
+    farmStashBtn.classList.add('hidden');
+    return;
+  }
+
   growBtn.classList.remove('hidden');
+  gardenerBtn.classList.remove('hidden');
+  farmStashBtn.classList.remove('hidden');
+
+  farmStashBtn.textContent = `Collect farm stash (${state.farm.stash})`;
+  farmStashBtn.disabled = state.farm.stash <= 0 || state.stash >= getCapacity();
+  farmStashBtn.onclick = collectFarmStash;
+
+  if(state.farm.gardenerHired){
+    gardenerBtn.textContent = "Gardener hired ✓ Auto-growing";
+    gardenerBtn.disabled = true;
+    gardenerBtn.onclick = null;
+
+    const remaining = Math.max(0, GROW_TIME_MS - (Date.now() - state.farm.plantedAt));
+    const mm = Math.floor(remaining/60000);
+    const ss = Math.floor((remaining%60000)/1000).toString().padStart(2,'0');
+    growBtn.textContent = remaining > 0
+      ? `Gardener growing crop... ${mm}:${ss} left`
+      : "Gardener harvesting now...";
+    growBtn.disabled = true;
+    growBtn.onclick = null;
+    return;
+  }
+
+  gardenerBtn.textContent = `Hire gardener (${fmt(GARDENER_COST)})`;
+  gardenerBtn.disabled = state.cash < GARDENER_COST;
+  gardenerBtn.onclick = hireGardener;
 
   if(!state.farm.planted){
     growBtn.textContent = `Buy lemon seeds & plant (${fmt(SEED_COST)})`;
@@ -699,8 +787,8 @@ function updateFarmButton(){
     growBtn.disabled = true;
     growBtn.onclick = null;
   } else {
-    growBtn.textContent = "Harvest crop — it's ready!";
-    growBtn.disabled = state.stash >= getCapacity();
+    growBtn.textContent = "Harvest crop to farm stash — it's ready!";
+    growBtn.disabled = false;
     growBtn.onclick = harvestCrop;
   }
 }
@@ -728,10 +816,20 @@ function updateDockButton(){
 
 function tickTimers(){
   if(!state) return;
+  let shouldRender = false;
+
   if(Date.now() - state.dock.lastRestockAt >= DOCK_RESTOCK_MS){
     state.dock.stock += DOCK_STOCK_MAX;
     state.dock.lastRestockAt = Date.now();
     addLog(`Another ship pulled into Sourside Docks with 100 more lemons. Stock now ${state.dock.stock}.`);
+    shouldRender = true;
+  }
+
+  if(runGardenerCycle()){
+    shouldRender = true;
+  }
+
+  if(shouldRender){
     render();
   } else {
     updateFarmButton();
