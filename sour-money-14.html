@@ -1,0 +1,1835 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Sour Money</title>
+<style>
+  :root{
+    --bg:#1a1625; --panel:#241f33; --panel2:#2d2740; --border:#3a3350;
+    --yellow:#f4e04d; --yellow-dim:#c9b93e; --red:#e6484f; --teal:#4ecdc4;
+    --text:#ede8f5; --text2:#a89fc2;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:var(--bg); color:var(--text);
+    font-family:'Segoe UI', Arial, sans-serif; min-height:100vh;
+    display:flex; justify-content:center; padding:24px 12px;
+  }
+  .game{width:100%; max-width:560px;}
+  h1{
+    font-family:Impact,'Arial Narrow',sans-serif; letter-spacing:3px;
+    color:var(--yellow); font-size:32px; margin:0; text-transform:uppercase;
+  }
+  .sub{color:var(--text2); font-size:13px; margin:2px 0 18px; letter-spacing:1px;}
+  .row{display:flex; gap:10px;}
+  .stat{
+    flex:1; background:var(--panel); border:1px solid var(--border);
+    border-radius:6px; padding:10px 12px;
+  }
+  .stat .lbl{font-size:11px; color:var(--text2); letter-spacing:1px; text-transform:uppercase;}
+  .stat .val{font-family:'Consolas','SF Mono',monospace; font-size:20px; margin-top:2px;}
+  .heatbox{
+    background:var(--panel); border:1px solid var(--border); border-radius:6px;
+    padding:10px 12px; margin-top:10px;
+  }
+  .heatlbl{display:flex; justify-content:space-between; font-size:11px; color:var(--text2);
+    letter-spacing:1px; text-transform:uppercase; margin-bottom:6px;}
+  .shreds{display:flex; gap:2px; height:22px;}
+  .shred{
+    flex:1; background:#3a3350; transform:skewX(-18deg);
+    border-radius:1px; transition:background .2s;
+  }
+  .panel{
+    background:var(--panel); border:1px solid var(--border); border-radius:6px;
+    padding:14px; margin-top:14px;
+  }
+  .panel h3{margin:0 0 4px; font-size:16px; color:var(--yellow);}
+  .price{font-family:'Consolas',monospace; color:var(--teal); font-size:14px; margin-bottom:10px;}
+  .controls{display:flex; gap:8px; align-items:center;}
+  input[type=number]{
+    width:70px; background:var(--panel2); border:1px solid var(--border);
+    color:var(--text); border-radius:4px; padding:7px; font-family:'Consolas',monospace;
+  }
+  button{
+    background:var(--panel2); border:1px solid var(--border); color:var(--text);
+    border-radius:4px; padding:8px 14px; cursor:pointer; font-size:13px;
+    font-weight:bold; letter-spacing:.5px;
+  }
+  button:hover{border-color:var(--yellow);}
+  button:disabled{opacity:.4; cursor:not-allowed;}
+  .buy{color:var(--teal);} .sell{color:var(--yellow);}
+  .custlist{display:flex; flex-direction:column; gap:8px; margin-top:10px;}
+  .cust{
+    display:flex; justify-content:space-between; align-items:center; gap:10px;
+    background:var(--panel2); border:1px solid var(--border); border-radius:6px;
+    padding:9px 12px;
+  }
+  .cust.served{opacity:.4;}
+  .cust.vip{border-color:var(--yellow); box-shadow:0 0 0 1px var(--yellow) inset;}
+  .cust .cname{font-weight:bold; font-size:13px;}
+  .cust .cflavor{font-size:11px; color:var(--text2); margin-top:2px;}
+  .cust .coffer{font-family:'Consolas',monospace; font-size:13px; color:var(--teal); white-space:nowrap;}
+  .cust button{white-space:nowrap;}
+  .locs{display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:14px;}
+  .loc{
+    background:var(--panel); border:1px solid var(--border); border-radius:6px;
+    padding:10px; cursor:pointer; text-align:left;
+  }
+  .loc:hover{border-color:var(--yellow);}
+  .loc.here{border-color:var(--teal); opacity:.5; cursor:default;}
+  .loc .lname{font-weight:bold; font-size:13px;}
+  .loc .lrisk{font-size:11px; color:var(--text2); margin-top:2px;}
+  .log{
+    margin-top:14px; background:var(--panel); border:1px solid var(--border);
+    border-radius:6px; padding:10px 12px; max-height:130px; overflow-y:auto;
+    font-family:'Consolas',monospace; font-size:12px; color:var(--text2);
+  }
+  .log div{padding:2px 0; border-bottom:1px solid var(--border);}
+  .log div:last-child{border-bottom:none;}
+  .overlay{
+    position:fixed; inset:0; background:rgba(0,0,0,.7); display:flex;
+    align-items:center; justify-content:center; padding:20px; z-index:10;
+  }
+  .modal{
+    background:var(--panel); border:1px solid var(--red); border-radius:8px;
+    padding:22px; max-width:380px; text-align:center;
+  }
+  .modal h2{color:var(--red); margin:0 0 8px; letter-spacing:1px;}
+  .modal p{color:var(--text2); font-size:14px; margin-bottom:18px;}
+  .modal button{width:100%; margin-bottom:8px;}
+  .jailpage{
+    background:var(--panel); border:1px solid var(--red); border-radius:8px;
+    padding:34px; max-width:560px; width:100%; text-align:left;
+  }
+  .jailpage p{color:var(--text2);}
+  .endcard{text-align:center; padding:30px 14px;}
+  .endcard .cash{font-family:'Consolas',monospace; font-size:36px; color:var(--yellow); margin:10px 0;}
+  .plotgrid{display:grid; grid-template-columns:repeat(auto-fill, minmax(85px, 1fr)); gap:6px; margin-bottom:8px;}
+  .hidden{display:none;}
+  .runstats{display:flex; justify-content:space-between; font-family:'Consolas',monospace;
+    font-size:13px; color:var(--text2); margin-bottom:8px;}
+  #runCanvas{background:#0f0c18; border:1px solid var(--border); border-radius:6px; display:block; margin:0 auto;}
+  .runbtns{display:flex; justify-content:center; gap:8px; margin-top:10px;}
+  .runbtns button{width:auto; flex:1; margin-bottom:0;}
+</style>
+</head>
+<body>
+<div class="game">
+  <h1>Sour Money</h1>
+  <div class="sub" id="daycount">Day 1</div>
+
+  <div style="display:flex; gap:6px; margin-bottom:14px; flex-wrap:wrap;">
+    <button onclick="pauseGame()" style="font-size:11px; padding:6px 10px;">Pause</button>
+    <button onclick="newGameConfirm()" style="font-size:11px; padding:6px 10px;">New game</button>
+    <button onclick="exportSave()" style="font-size:11px; padding:6px 10px;">Export save</button>
+    <button onclick="toggleImportBox()" style="font-size:11px; padding:6px 10px;">Import save</button>
+    <button onclick="openLeaderboard()" style="font-size:11px; padding:6px 10px;">Leaderboard</button>
+    <span style="font-size:11px; color:var(--text2); align-self:center;" id="saveStatus"></span>
+  </div>
+  <textarea id="saveCodeArea" class="hidden" readonly
+    style="width:100%; height:60px; background:var(--panel2); border:1px solid var(--border); color:var(--text2); border-radius:6px; font-family:'Consolas',monospace; font-size:10px; margin-bottom:10px; padding:8px;"></textarea>
+  <div id="importBox" class="hidden" style="margin-bottom:14px;">
+    <textarea id="importCodeArea" placeholder="Paste your save code here..."
+      style="width:100%; height:60px; background:var(--panel2); border:1px solid var(--border); color:var(--text); border-radius:6px; font-family:'Consolas',monospace; font-size:10px; padding:8px;"></textarea>
+    <button onclick="importSave()" style="width:100%; margin-top:6px;">Load this save</button>
+  </div>
+
+  <div class="row">
+    <div class="stat"><div class="lbl">Cash</div><div class="val" id="cash">$0</div></div>
+    <div class="stat"><div class="lbl">Stash</div><div class="val" id="stash">0</div></div>
+    <div class="stat"><div class="lbl">Times jailed</div><div class="val" id="strikes">0</div></div>
+  </div>
+
+  <div class="heatbox">
+    <div class="heatlbl"><span>Heat</span><span id="heatnum">0</span></div>
+    <div class="shreds" id="shreds"></div>
+  </div>
+
+  <div class="panel" id="tradepanel">
+    <h3 id="locname"></h3>
+    <div class="price" id="priceline"></div>
+    <div class="price" id="specialline" style="color:var(--yellow-dim); font-size:12px;"></div>
+    <div class="controls" id="tradeControls">
+      <input type="number" id="qty" min="1" value="10">
+      <button class="buy" id="buyBtn">Buy</button>
+      <button class="sell" id="sellBtn">Sell</button>
+    </div>
+    <div style="margin-top:8px;">
+      <button class="sell hidden" id="launderBtn" style="width:100%;"></button>
+      <button class="sell hidden" id="fenceBtn" style="width:100%;"></button>
+      <button class="sell hidden" id="shopBtn" style="width:100%;">Visit the casino</button>
+      <div class="plotgrid hidden" id="plotRow"></div>
+      <button class="sell hidden" id="hireWorkerBtn" style="width:100%;"></button>
+      <div class="price hidden" id="workerStatus" style="font-size:11px; color:var(--text2);"></div>
+      <button class="sell hidden" id="dockBtn" style="width:100%;"></button>
+      <button class="sell hidden" id="afkBtn" style="width:100%;"></button>
+    </div>
+  </div>
+
+  <div class="panel" id="custpanel">
+    <h3>Customers</h3>
+    <div class="custlist" id="custlist"></div>
+  </div>
+
+  <div class="panel hidden" id="upgradespanel">
+    <h3>Black market</h3>
+    <div class="custlist" id="upgradeslist"></div>
+  </div>
+
+  <div class="locs" id="locs"></div>
+  <div class="log" id="log"></div>
+</div>
+
+<div class="overlay hidden" id="copOverlay">
+  <div class="modal">
+    <h2>ZEST ENFORCEMENT</h2>
+    <p id="copText">A patrol just clocked your stash.</p>
+    <button id="runBtn">Run for it</button>
+    <button id="hideBtn">Toss everything (stash + cash)</button>
+  </div>
+</div>
+
+<div class="overlay hidden" id="runOverlay">
+  <div class="modal" style="max-width:340px;">
+    <h2 style="color:var(--yellow);">MAKE A BREAK FOR IT</h2>
+    <p id="runCopLabel" style="color:var(--red); font-weight:bold;"></p>
+    <p>&larr; &rarr; to dodge crates, &uarr; to hop the barriers, grab teal lemons for less heat.</p>
+    <div class="runstats">
+      <span id="runLives">Lives: ♥♥♥</span>
+      <span id="runDist">0%</span>
+    </div>
+    <canvas id="runCanvas" width="300" height="420"></canvas>
+    <div class="runbtns">
+      <button id="runLeftBtn">&larr;</button>
+      <button id="runJumpBtn">Jump</button>
+      <button id="runRightBtn">&rarr;</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay hidden" id="shopOverlay">
+  <div class="modal" style="max-width:380px;">
+    <h2 style="color:var(--yellow);">ZESTBRIDGE CASINO</h2>
+
+    <div id="shopMenu">
+      <p>Five ways to turn cash into more cash. Or lemons. Or luck. Welcome to Zestbridge Casino.</p>
+      <div class="runbtns" style="flex-wrap:wrap; gap:6px;">
+        <button style="flex:1 1 100%;" onclick="showGame('CoinFlip')">Coin Flip</button>
+        <button style="flex:1 1 100%;" onclick="showGame('HighLow')">High-Low Cards</button>
+        <button style="flex:1 1 100%;" onclick="showGame('Slots')">Lemon Slots</button>
+        <button style="flex:1 1 100%;" onclick="showGame('QuickDraw')">Quick Draw</button>
+        <button style="flex:1 1 100%;" onclick="showGame('LuckyNumber')">Lucky Number</button>
+      </div>
+    </div>
+
+    <div id="gameCoinFlip" class="hidden">
+      <button onclick="showGame('menu')">&larr; Back</button>
+      <p>Bet some cash on a flip. Call it right and you double up; call it wrong and it's gone.</p>
+      <div class="controls" style="justify-content:center;">
+        <input type="number" id="coinBet" value="100" min="10">
+      </div>
+      <div class="runbtns">
+        <button onclick="playCoinFlip('heads')">Heads</button>
+        <button onclick="playCoinFlip('tails')">Tails</button>
+      </div>
+      <p id="coinResult"></p>
+    </div>
+
+    <div id="gameHighLow" class="hidden">
+      <button onclick="showGame('menu')">&larr; Back</button>
+      <p>$50 to draw a card. Guess if the next card is higher or lower. Call it right for $150.</p>
+      <button onclick="startHighLow()">Draw a card ($50)</button>
+      <p id="highLowCards" style="font-family:'Consolas',monospace; font-size:18px;"></p>
+      <div class="runbtns" id="highLowGuessBtns" style="display:none;">
+        <button onclick="guessHighLow('higher')">Higher</button>
+        <button onclick="guessHighLow('lower')">Lower</button>
+      </div>
+      <p id="highLowResult"></p>
+    </div>
+
+    <div id="gameSlots" class="hidden">
+      <button onclick="showGame('menu')">&larr; Back</button>
+      <p>$75 a spin. Three lemons pays out lemons, three sevens pays out big cash.</p>
+      <button onclick="playSlots()">Spin ($75)</button>
+      <p id="slotsReels" style="font-size:32px; text-align:center;">— — —</p>
+      <p id="slotsResult"></p>
+    </div>
+
+    <div id="gameQuickDraw" class="hidden">
+      <button onclick="showGame('menu')">&larr; Back</button>
+      <p>$300 a try. Wait for the signal, then tap as fast as you can. Faster taps pay more.</p>
+      <button id="quickDrawBtn" onclick="quickDrawClick()" style="width:100%;">Start</button>
+      <p id="quickDrawResult"></p>
+    </div>
+
+    <div id="gameLuckyNumber" class="hidden">
+      <button onclick="showGame('menu')">&larr; Back</button>
+      <p>$300 to play. Pick 1–5. Match the draw and win a rare prize — though strike passes are hard to come by.</p>
+      <div class="runbtns" style="flex-wrap:wrap; gap:6px;">
+        <button style="flex:1 1 18%;" onclick="playLuckyNumber(1)">1</button>
+        <button style="flex:1 1 18%;" onclick="playLuckyNumber(2)">2</button>
+        <button style="flex:1 1 18%;" onclick="playLuckyNumber(3)">3</button>
+        <button style="flex:1 1 18%;" onclick="playLuckyNumber(4)">4</button>
+        <button style="flex:1 1 18%;" onclick="playLuckyNumber(5)">5</button>
+      </div>
+      <p id="luckyNumberResult"></p>
+    </div>
+
+    <button onclick="closeGameShop()" style="margin-top:10px; width:100%;">Close shop</button>
+  </div>
+</div>
+
+<div class="overlay hidden" id="jailOverlay">
+  <div class="jailpage">
+    <h1 style="font-family:Impact,'Arial Narrow',sans-serif; letter-spacing:3px; color:var(--red); font-size:30px; margin:0 0 2px; text-transform:uppercase;">Zest County Jail</h1>
+    <div style="color:var(--text2); font-size:13px; letter-spacing:1px; margin-bottom:20px;">Intake complete. Personal effects confiscated.</div>
+    <p id="jailFlavor" style="font-size:14px; margin-bottom:10px;"></p>
+    <p style="font-family:'Consolas',monospace; font-size:34px; color:var(--yellow); margin:8px 0 22px;" id="jailTimer"></p>
+    <div id="jailSecretArea"></div>
+  </div>
+</div>
+
+<div class="overlay hidden" id="leaderboardOverlay">
+  <div class="jailpage" style="border-color:var(--yellow); max-width:560px;">
+    <h1 style="font-family:Impact,'Arial Narrow',sans-serif; letter-spacing:3px; color:var(--yellow); font-size:26px; margin:0 0 14px; text-transform:uppercase;">Leaderboard</h1>
+
+    <div style="display:flex; gap:8px; margin-bottom:14px; flex-wrap:wrap;">
+      <input type="text" id="lbNameInput" placeholder="Your name" maxlength="20"
+        style="flex:1; min-width:140px; background:var(--panel2); border:1px solid var(--border); color:var(--text); border-radius:4px; padding:8px; font-family:'Consolas',monospace;">
+      <button onclick="uploadToLeaderboard()">Upload my world</button>
+      <button onclick="refreshLeaderboard()">Refresh</button>
+    </div>
+    <div style="font-size:12px; color:var(--text2); margin-bottom:16px;" id="lbStatus"></div>
+
+    <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px;">
+      <div>
+        <div style="color:var(--teal); font-size:12px; letter-spacing:1px; margin-bottom:6px; text-transform:uppercase;">Most cash</div>
+        <div id="lbMoney" style="font-size:12px; color:var(--text2); font-family:'Consolas',monospace; line-height:1.7;"></div>
+      </div>
+      <div>
+        <div style="color:var(--yellow-dim); font-size:12px; letter-spacing:1px; margin-bottom:6px; text-transform:uppercase;">Most days</div>
+        <div id="lbDays" style="font-size:12px; color:var(--text2); font-family:'Consolas',monospace; line-height:1.7;"></div>
+      </div>
+      <div>
+        <div style="color:var(--red); font-size:12px; letter-spacing:1px; margin-bottom:6px; text-transform:uppercase;">Most jailed, no escape</div>
+        <div id="lbJailed" style="font-size:12px; color:var(--text2); font-family:'Consolas',monospace; line-height:1.7;"></div>
+      </div>
+    </div>
+
+    <button onclick="closeLeaderboard()" style="width:100%; margin-top:22px;">Close</button>
+  </div>
+</div>
+
+<div class="overlay hidden" id="pauseOverlay">
+  <div class="modal" style="max-width:340px; border-color:var(--yellow);">
+    <h2 style="color:var(--yellow);">GAME PAUSED</h2>
+    <p>Ships, crops, ship restocks, AFK payouts, jail time — everything's frozen until you hit continue.</p>
+    <button onclick="resumeGame()" style="width:100%;">Continue</button>
+  </div>
+</div>
+
+<div class="overlay hidden" id="endOverlay">
+  <div class="modal endcard">
+    <h2 id="endTitle">GAME OVER</h2>
+    <div class="cash" id="endCash">$0</div>
+    <p id="endText"></p>
+    <button id="restartBtn">Play again</button>
+  </div>
+</div>
+
+<script>
+const LOCATIONS = [
+  {name:"Sourside Docks", base:8,  risk:0.6, special:"noHeatBuy", specialLabel:"Buying here draws no heat", dock:true, noSell:true},
+  {name:"Pulp Heights",   base:14, risk:0.8, special:"coolDown",  specialLabel:"Lookout tower: extra heat cooldown"},
+  {name:"Zestbridge Casino", base:20, risk:1.0, special:"gameShop", specialLabel:"Casino: 5 ways to gamble for cash, lemons, or rare prizes"},
+  {name:"RindRow Farm",   base:17, risk:0,   special:"grow",     specialLabel:"Always safe, buy seeds and grow lemons over time", noSell:true},
+  {name:"The Wedge",      base:27, risk:1.5, special:"vip",        specialLabel:"Sometimes draws a big-spending VIP", noSell:true},
+  {name:"Black Market",   base:34, risk:2.5, isBlackMarket:true, special:"fence", specialLabel:"Fence your whole stash, no heat, no risk roll"},
+  {name:"Stay Sour",      base:15, risk:0,   special:"afk",       specialLabel:"AFK here: auto-buy, auto-grow, and auto-sell at the best price — but only 50% pay", noSell:true},
+];
+const CAPACITY = 100;
+const MAX_STRIKES = 1;
+
+const CUSTOMER_NAMES = [
+  "Big Rind", "Sour Sally", "The Juicer", "Mama Zest", "Citrus Sal",
+  "Pulp Pete", "Wedge Wendy", "Old Man Acid", "Tart Tony", "Peel Paulie",
+  "Squeeze Lou", "Auntie Marmalade", "Rind Ronnie", "Zesty Z", "Lemon Larry"
+];
+const FLAVORS = [
+  "Says it's for a juice cleanse.",
+  "Buying in bulk, no questions asked.",
+  "Offers top dollar, seems a little too eager.",
+  "Wants them for a 'family recipe'.",
+  "Haggard, smells like an all-nighter.",
+  "Claims it's for a restaurant order.",
+  "Nervous, keeps checking the street.",
+  "Regular face around these parts.",
+  "New in town, asking a lot of questions.",
+  "Pays in small bills, won't make eye contact."
+];
+
+const VIP_NAMES = ["Mr. Citron", "The Big Squeeze", "Dame Marmalade", "Don Pellegrino"];
+
+function genCustomers(price, heat, isBlackMarket, vipChance, bmPrice){
+  const count = isBlackMarket ? 3 + Math.floor(Math.random()*2) : 2 + Math.floor(Math.random()*2);
+  const customers = [];
+  const usedNames = new Set();
+  for(let i=0;i<count;i++){
+    let name;
+    do{ name = CUSTOMER_NAMES[Math.floor(Math.random()*CUSTOMER_NAMES.length)]; }
+    while(usedNames.has(name));
+    usedNames.add(name);
+    const mult = isBlackMarket ? 1.1 + Math.random()*0.9 : 0.8 + Math.random()*0.8;
+    const qty = isBlackMarket ? 10 + Math.floor(Math.random()*31) : 5 + Math.floor(Math.random()*21);
+    const flavor = FLAVORS[Math.floor(Math.random()*FLAVORS.length)];
+    let copChance;
+    if(isBlackMarket){
+      copChance = 0.05;
+    } else {
+      copChance = Math.min(0.5, 0.09 + heat/300 + (mult > 1.3 ? 0.12 : 0));
+    }
+    customers.push({
+      name, flavor, qty,
+      price: Math.round(price*mult),
+      isCop: Math.random() < copChance,
+      served: false
+    });
+  }
+  if(vipChance && Math.random() < vipChance){
+    // Black Market customers top out at 2.0x the Black Market's price that day.
+    // The VIP always beats that ceiling, no matter how the dice land.
+    const bmCeiling = bmPrice ? bmPrice * 2.0 : price * 1.6;
+    const vipPrice = Math.round(bmCeiling * (1.08 + Math.random()*0.35));
+    customers.push({
+      name: VIP_NAMES[Math.floor(Math.random()*VIP_NAMES.length)],
+      flavor: "A VIP regular. Pays more per lemon than anyone in the city, no exceptions.",
+      qty: 30 + Math.floor(Math.random()*26),
+      price: vipPrice,
+      isCop: Math.random() < 0.05,
+      served: false,
+      isVip: true
+    });
+  }
+  return customers;
+}
+
+let state;
+
+const TRADER_NAMES = ["Shady Sam", "The Fixer", "Crate Carlos", "Whispering Walt", "Backdoor Bea"];
+
+function rollTrader(l, price){
+  if(!l.isBlackMarket) return null;
+  if(Math.random() > 0.18) return null;
+  return {
+    name: TRADER_NAMES[Math.floor(Math.random()*TRADER_NAMES.length)],
+    qty: 20 + Math.floor(Math.random()*31),
+    price: Math.round(price * (0.4 + Math.random()*0.2))
+  };
+}
+
+function freshPrices(heat){
+  const h = heat || 0;
+  const basePrices = LOCATIONS.map(l => Math.round(l.base * (0.7 + Math.random()*0.6)));
+  const bmIndex = LOCATIONS.findIndex(l => l.isBlackMarket);
+  const blackMarketPrice = bmIndex >= 0 ? basePrices[bmIndex] : 0;
+  return LOCATIONS.map((l, i) => {
+    const price = basePrices[i];
+    const vipChance = l.special === 'vip' ? 0.5 : 0;
+    const customers = l.special === 'afk' ? [] : genCustomers(price, h, !!l.isBlackMarket, vipChance, blackMarketPrice);
+    const trader = rollTrader(l, price);
+    return {
+      name: l.name, risk: l.risk, price, customers, trader,
+      isBlackMarket: !!l.isBlackMarket, special: l.special, specialLabel: l.specialLabel, dock: !!l.dock, noSell: !!l.noSell
+    };
+  });
+}
+
+function getCapacity(){
+  return CAPACITY + state.upgrades.biggerStashLvl*20 + (state.upgrades.bonusCapacity || 0);
+}
+
+function effBuyPrice(base){
+  return Math.round(base * (state.upgrades.fortune ? 0.8 : 1));
+}
+function effSellPrice(base){
+  return Math.round(base * (state.upgrades.fortune ? 1.2 : 1));
+}
+
+function newGame(){
+  state = {
+    cash: 500, stash: 0, day: 1, heat: 0, strikes: 0, timesServedFull: 0,
+    locIndex: 0, prices: null, log: [],
+    upgrades: { biggerStashLvl: 0, silkRunner: false, heatSink: false, strikePasses: 0, fortune: false, bonusCapacity: 0 },
+    farm: { workers: 0, plots: Array.from({length:10}, (_,i) => ({ owned: i === 0, plantedAt: null })) },
+    dock: { stock: 100, lastRestockAt: Date.now() },
+    jail: { active: false, enteredAt: 0, sentenceMs: 0, fileUsed: false, barsClicks: 0, brickClicks: 0, bribeRevealed: false },
+    afk: { active: false, lastCycleAt: 0, totalEarned: 0 }
+  };
+  state.prices = freshPrices(0);
+  addLog("You step onto the docks with $500 and a dream.");
+  render();
+}
+
+function addLog(msg){
+  state.log.unshift(msg);
+  if(state.log.length > 30) state.log.pop();
+}
+
+function fmt(n){ return "$" + Math.round(n).toLocaleString(); }
+
+function render(){
+  document.getElementById('daycount').textContent = `Day ${state.day}`;
+  document.getElementById('cash').textContent = fmt(state.cash);
+  document.getElementById('stash').textContent = `${state.stash} / ${getCapacity()}`;
+  document.getElementById('strikes').textContent = `${state.strikes}`;
+  document.getElementById('heatnum').textContent = Math.round(state.heat);
+
+  const shredWrap = document.getElementById('shreds');
+  shredWrap.innerHTML = "";
+  const filled = Math.round(state.heat/5);
+  for(let i=0;i<20;i++){
+    const d = document.createElement('div');
+    d.className = 'shred';
+    if(i < filled){
+      const t = i/20;
+      d.style.background = t < 0.6 ? 'var(--yellow-dim)' : 'var(--red)';
+    }
+    shredWrap.appendChild(d);
+  }
+
+  const here = state.prices[state.locIndex];
+  document.getElementById('locname').textContent = here.name;
+  const buyP = effBuyPrice(here.price);
+  const sellP = effSellPrice(here.price);
+  const buyBtn = document.getElementById('buyBtn');
+  buyBtn.classList.toggle('hidden', !here.dock);
+  const sellBtn = document.getElementById('sellBtn');
+  sellBtn.classList.toggle('hidden', !!here.noSell);
+  document.getElementById('tradeControls').classList.toggle('hidden', here.special === 'grow' || here.special === 'afk');
+
+  if(here.dock){
+    document.getElementById('priceline').textContent = `Buy ${fmt(buyP)} each — ship stock: ${state.dock.stock}. No selling here.`;
+  } else if(here.special === 'grow'){
+    document.getElementById('priceline').textContent = `No market here — grow your own lemons and carry them out to sell.`;
+  } else if(here.special === 'afk'){
+    document.getElementById('priceline').textContent = `No market here — just a quiet spot to go AFK.`;
+  } else if(here.noSell){
+    document.getElementById('priceline').textContent = `No direct market here — sell only works through customers passing through.`;
+  } else if(here.isBlackMarket){
+    document.getElementById('priceline').textContent = `Premium price: sell ${fmt(sellP)} each — dealing in the open here doubles your risk.`;
+  } else {
+    document.getElementById('priceline').textContent = `Sell ${fmt(sellP)} each`;
+  }
+
+  updateDockButton();
+  updateAfkButton();
+
+  const specialEl = document.getElementById('specialline');
+  specialEl.textContent = here.specialLabel || "";
+
+  const launderBtn = document.getElementById('launderBtn');
+  launderBtn.classList.toggle('hidden', here.special !== 'chopShop');
+  if(here.special === 'chopShop'){
+    const cost = Math.round(50 + state.heat*4);
+    launderBtn.textContent = `Launder heat (${fmt(cost)})`;
+    launderBtn.disabled = state.cash < cost || state.heat <= 0;
+  }
+
+  const fenceBtn = document.getElementById('fenceBtn');
+  fenceBtn.classList.toggle('hidden', here.special !== 'fence');
+  if(here.special === 'fence'){
+    const unit = Math.round(effSellPrice(here.price)*0.8);
+    fenceBtn.textContent = `Fence it all (${fmt(unit)} each, no heat)`;
+    fenceBtn.disabled = state.stash <= 0;
+  }
+
+  const shopBtn = document.getElementById('shopBtn');
+  shopBtn.classList.toggle('hidden', here.special !== 'gameShop');
+
+  renderPlots();
+  updateWorkerButton();
+
+  const custpanelEl = document.getElementById('custpanel');
+  const upgradespanelEl = document.getElementById('upgradespanel');
+  custpanelEl.classList.toggle('hidden', here.special === 'afk');
+  if(here.isBlackMarket){
+    upgradespanelEl.classList.remove('hidden');
+    renderUpgrades();
+  } else {
+    upgradespanelEl.classList.add('hidden');
+  }
+
+  const custEl = document.getElementById('custlist');
+  custEl.innerHTML = "";
+
+  if(here.trader){
+    const t = here.trader;
+    const div = document.createElement('div');
+    div.className = 'cust';
+    div.style.borderColor = 'var(--teal)';
+    div.style.boxShadow = '0 0 0 1px var(--teal) inset';
+    const total = t.qty * t.price;
+    div.innerHTML = `
+      <div>
+        <div class="cname">☆ ${t.name} <span class="coffer">has ${t.qty}</span></div>
+        <div class="cflavor">A trader passing through, selling cheap.</div>
+      </div>
+      <div style="text-align:right;">
+        <div class="coffer">${fmt(total)} total</div>
+        <div class="cflavor">${fmt(t.price)} each</div>
+      </div>`;
+    const btn = document.createElement('button');
+    btn.className = 'buy';
+    btn.textContent = 'Buy';
+    btn.disabled = state.cash < total || state.stash + t.qty > getCapacity();
+    btn.onclick = buyFromTrader;
+    div.lastElementChild.appendChild(btn);
+    custEl.appendChild(div);
+  }
+
+  here.customers.forEach((c, i) => {
+    const div = document.createElement('div');
+    div.className = 'cust' + (c.served ? ' served' : '') + (c.isVip ? ' vip' : '');
+    const unitPrice = effSellPrice(c.price);
+    const total = c.qty * unitPrice;
+    const canServe = !c.served && state.stash >= c.qty;
+    div.innerHTML = `
+      <div>
+        <div class="cname">${c.isVip ? '★ ' : ''}${c.name} <span class="coffer">wants ${c.qty}</span></div>
+        <div class="cflavor">${c.served ? 'Deal done.' : c.flavor}</div>
+      </div>
+      <div style="text-align:right;">
+        <div class="coffer">${fmt(total)} total</div>
+        <div class="cflavor">${fmt(unitPrice)} each</div>
+      </div>`;
+    if(!c.served){
+      const btn = document.createElement('button');
+      btn.className = 'sell';
+      btn.textContent = 'Sell';
+      btn.disabled = !canServe;
+      btn.onclick = () => sellToCustomer(i);
+      div.lastElementChild.appendChild(btn);
+    }
+    custEl.appendChild(div);
+  });
+
+  const locsEl = document.getElementById('locs');
+  locsEl.innerHTML = "";
+  state.prices.forEach((l, i) => {
+    const div = document.createElement('div');
+    div.className = 'loc' + (i === state.locIndex ? ' here' : '');
+    if(l.isBlackMarket) div.style.borderColor = 'var(--red)';
+    const tagText = l.isBlackMarket ? 'Black market' : 'Travel';
+    div.innerHTML = `<div class="lname">${l.name}</div><div class="lrisk">${i===state.locIndex ? 'You are here' : tagText+' · risk x'+l.risk}</div><div class="lrisk" style="color:var(--yellow-dim);">${l.specialLabel}</div>`;
+    if(i !== state.locIndex) div.onclick = () => travel(i);
+    locsEl.appendChild(div);
+  });
+
+  const logEl = document.getElementById('log');
+  logEl.innerHTML = state.log.map(m => `<div>${m}</div>`).join("");
+
+  saveGame();
+}
+
+function renderUpgrades(){
+  const wrap = document.getElementById('upgradeslist');
+  wrap.innerHTML = "";
+
+  const items = [];
+  const stashLvl = state.upgrades.biggerStashLvl;
+  const stashCost = stashLvl < 5 ? 1500 : 3000;
+  items.push({
+    name: "Bigger stash",
+    desc: `+20 stash capacity (level ${stashLvl} owned — no limit, ${stashLvl < 5 ? `$1500 each for the first 5` : `$3000 each after that`}).`,
+    cost: stashCost,
+    owned: false,
+    action: () => { state.upgrades.biggerStashLvl += 1; addLog("Your stash just got roomier."); }
+  });
+  items.push({
+    name: "Quick hands",
+    desc: "Every deal draws 30% less heat.",
+    cost: 900, owned: state.upgrades.silkRunner,
+    action: () => { state.upgrades.silkRunner = true; addLog("You've got quick hands now."); }
+  });
+  items.push({
+    name: "Heat sink",
+    desc: "Heat cools twice as fast between stops.",
+    cost: 850, owned: state.upgrades.heatSink,
+    action: () => { state.upgrades.heatSink = true; addLog("You picked up a heat sink."); }
+  });
+  items.push({
+    name: "Strike pass",
+    desc: `Cancels your next strike if you're caught. Holding ${state.upgrades.strikePasses}.`,
+    cost: 5000 + state.upgrades.strikePasses*2500, owned: false,
+    action: () => { state.upgrades.strikePasses += 1; addLog("You tuck a strike pass into your jacket."); }
+  });
+  items.push({
+    name: "Fortune",
+    desc: "Sell prices up 20%, buy prices down 20%, everywhere, permanently.",
+    cost: 2200, owned: state.upgrades.fortune,
+    action: () => { state.upgrades.fortune = true; addLog("Lady Luck's on your side now."); }
+  });
+
+  items.forEach(item => {
+    const div = document.createElement('div');
+    div.className = 'cust' + (item.owned ? ' served' : '');
+    div.innerHTML = `
+      <div>
+        <div class="cname">${item.name}</div>
+        <div class="cflavor">${item.desc}</div>
+      </div>
+      <div style="text-align:right;"></div>`;
+    if(item.owned){
+      div.lastElementChild.textContent = 'Owned';
+    } else {
+      const btn = document.createElement('button');
+      btn.className = 'sell';
+      btn.textContent = fmt(item.cost);
+      btn.disabled = state.cash < item.cost;
+      btn.onclick = () => {
+        state.cash -= item.cost;
+        item.action();
+        render();
+      };
+      div.lastElementChild.appendChild(btn);
+    }
+    wrap.appendChild(div);
+  });
+}
+
+function getQty(){
+  const q = parseInt(document.getElementById('qty').value, 10);
+  return isNaN(q) || q < 1 ? 1 : q;
+}
+
+function buy(){
+  const q = getQty();
+  const here = state.prices[state.locIndex];
+  if(!here.dock){ addLog("There's nothing to buy here."); render(); return; }
+  if(q > state.dock.stock){ addLog(`The ship's only got ${state.dock.stock} lemons left.`); render(); return; }
+  const unit = effBuyPrice(here.price);
+  const cost = q * unit;
+  if(state.stash + q > getCapacity()){ addLog("Your stash can't hold that many lemons."); render(); return; }
+  if(cost > state.cash){ addLog("You can't afford that many lemons."); render(); return; }
+  const heatFactor = here.special === 'noHeatBuy' ? 0 : (state.upgrades.silkRunner ? 0.7 : 1);
+  state.cash -= cost;
+  state.stash += q;
+  state.dock.stock -= q;
+  state.heat = Math.min(100, state.heat + q*0.15*heatFactor);
+  addLog(`Bought ${q} lemons off the ship for ${fmt(cost)} (${fmt(unit)} each). Ship has ${state.dock.stock} left.`);
+  render();
+}
+
+function launderHeat(){
+  const here = state.prices[state.locIndex];
+  if(here.special !== 'chopShop') return;
+  const cost = Math.round(50 + state.heat*4);
+  if(state.heat <= 0 || state.cash < cost) return;
+  state.cash -= cost;
+  state.heat = Math.max(0, state.heat - 20);
+  addLog(`Paid ${fmt(cost)} at the chop shop to launder off some heat.`);
+  render();
+}
+
+function fenceStash(){
+  const here = state.prices[state.locIndex];
+  if(here.special !== 'fence' || state.stash <= 0) return;
+  const unit = Math.round(effSellPrice(here.price)*0.8);
+  const qty = state.stash;
+  const revenue = qty * unit;
+  state.cash += revenue;
+  state.stash = 0;
+  addLog(`Fenced all ${qty} lemons quietly for ${fmt(revenue)} (${fmt(unit)} each, no heat, no risk).`);
+  render();
+}
+
+const GROW_TIME_MS = 3 * 60 * 1000;
+const SEED_COST = 300;
+const PLOT_COST = 750;
+const MAX_PLOTS = 10;
+
+function buyPlot(index){
+  const p = state.farm.plots[index];
+  if(!p || p.owned) return;
+  if(state.cash < PLOT_COST){ addLog("Not enough cash to buy that plot."); render(); return; }
+  state.cash -= PLOT_COST;
+  p.owned = true;
+  addLog(`Bought Plot ${index+1} for ${fmt(PLOT_COST)}.`);
+  render();
+}
+
+function plantPlot(index){
+  const p = state.farm.plots[index];
+  if(!p || !p.owned || p.plantedAt !== null) return;
+  if(state.cash < SEED_COST){ addLog("Not enough cash for lemon seeds."); render(); return; }
+  state.cash -= SEED_COST;
+  p.plantedAt = Date.now();
+  addLog(`Planted Plot ${index+1}. Ready in 3 minutes.`);
+  render();
+}
+
+function harvestPlot(index){
+  const p = state.farm.plots[index];
+  if(!p || !p.owned || p.plantedAt === null) return;
+  if(Date.now() - p.plantedAt < GROW_TIME_MS) return;
+  const gain = Math.max(0, Math.min(getCapacity() - state.stash, 1 + Math.floor(Math.random()*5)));
+  state.stash += gain;
+  p.plantedAt = null;
+  addLog(gain > 0
+    ? `Harvested ${gain} lemon${gain>1?'s':''} from Plot ${index+1}.`
+    : `Plot ${index+1} ready, but your stash is already full.`);
+  render();
+}
+
+function renderPlots(){
+  if(!state) return;
+  const here = state.prices[state.locIndex];
+  const wrap = document.getElementById('plotRow');
+  if(!here || here.special !== 'grow'){ wrap.classList.add('hidden'); return; }
+  wrap.classList.remove('hidden');
+  wrap.innerHTML = '';
+  state.farm.plots.forEach((p, i) => {
+    const div = document.createElement('div');
+    div.style.cssText = 'background:var(--panel2); border:1px solid var(--border); border-radius:6px; padding:8px; text-align:center; font-size:11px;';
+    let bodyHtml = '';
+    let btn = null;
+
+    if(!p.owned){
+      bodyHtml = `<div style="color:var(--text2);">Unclaimed</div>`;
+      btn = document.createElement('button');
+      btn.textContent = `Buy ${fmt(PLOT_COST)}`;
+      btn.disabled = state.cash < PLOT_COST;
+      btn.className = 'buy';
+      btn.onclick = () => buyPlot(i);
+    } else if(p.plantedAt === null){
+      bodyHtml = `<div style="color:var(--text2);">Empty</div>`;
+      btn = document.createElement('button');
+      btn.textContent = `Plant ${fmt(SEED_COST)}`;
+      btn.disabled = state.cash < SEED_COST;
+      btn.className = 'sell';
+      btn.onclick = () => plantPlot(i);
+    } else {
+      const remaining = GROW_TIME_MS - (Date.now() - p.plantedAt);
+      if(remaining > 0){
+        const mm = Math.floor(remaining/60000);
+        const ss = Math.floor((remaining%60000)/1000).toString().padStart(2,'0');
+        bodyHtml = `<div style="color:var(--yellow-dim); font-family:'Consolas',monospace;">${mm}:${ss}</div>`;
+      } else {
+        bodyHtml = `<div style="color:var(--teal);">Ready!</div>`;
+        btn = document.createElement('button');
+        btn.textContent = 'Harvest';
+        btn.disabled = state.stash >= getCapacity();
+        btn.className = 'sell';
+        btn.onclick = () => harvestPlot(i);
+      }
+    }
+
+    div.innerHTML = `<div style="font-weight:bold; margin-bottom:4px;">Plot ${i+1}</div>${bodyHtml}`;
+    if(btn){
+      btn.style.cssText += 'width:100%; margin-top:6px; font-size:10px; padding:5px;';
+      div.appendChild(btn);
+    }
+    wrap.appendChild(div);
+  });
+}
+
+const MAX_WORKERS = 3;
+const WORKER_BASE_COST = 800;
+const WORKER_COST_STEP = 600;
+
+function getWorkerCost(){
+  return WORKER_BASE_COST + state.farm.workers * WORKER_COST_STEP;
+}
+
+function hireWorker(){
+  if(state.farm.workers >= MAX_WORKERS) return;
+  const cost = getWorkerCost();
+  if(state.cash < cost){ addLog("Not enough cash to hire a worker."); render(); return; }
+  state.cash -= cost;
+  state.farm.workers += 1;
+  addLog(`Hired a worker for ${fmt(cost)}. They'll plant and harvest your owned plots automatically.`);
+  render();
+}
+
+function tickWorkerPlots(){
+  if(!state || state.farm.workers <= 0) return;
+  let actionsLeft = state.farm.workers;
+  let changed = false;
+
+  for(const p of state.farm.plots){
+    if(actionsLeft <= 0) break;
+    if(p.owned && p.plantedAt !== null && Date.now() - p.plantedAt >= GROW_TIME_MS){
+      const gain = Math.max(0, Math.min(getCapacity() - state.stash, 1 + Math.floor(Math.random()*5)));
+      if(gain > 0){
+        state.stash += gain;
+        addLog(`A hired hand harvested ${gain} lemon${gain>1?'s':''} from the orchard.`);
+      }
+      p.plantedAt = null;
+      changed = true;
+      actionsLeft--;
+    }
+  }
+  for(const p of state.farm.plots){
+    if(actionsLeft <= 0) break;
+    if(p.owned && p.plantedAt === null && state.cash >= SEED_COST){
+      state.cash -= SEED_COST;
+      p.plantedAt = Date.now();
+      changed = true;
+      actionsLeft--;
+    }
+  }
+  if(changed) render();
+}
+
+function updateWorkerButton(){
+  if(!state) return;
+  const here = state.prices[state.locIndex];
+  const hireBtn = document.getElementById('hireWorkerBtn');
+  const statusEl = document.getElementById('workerStatus');
+  if(!here || here.special !== 'grow'){
+    hireBtn.classList.add('hidden');
+    statusEl.classList.add('hidden');
+    return;
+  }
+  if(state.farm.workers >= MAX_WORKERS){
+    hireBtn.classList.add('hidden');
+  } else {
+    hireBtn.classList.remove('hidden');
+    const cost = getWorkerCost();
+    hireBtn.textContent = `Hire a worker (${fmt(cost)}) — ${state.farm.workers}/${MAX_WORKERS} hired`;
+    hireBtn.disabled = state.cash < cost;
+    hireBtn.onclick = hireWorker;
+  }
+  if(state.farm.workers > 0){
+    const owned = state.farm.plots.filter(p => p.owned).length;
+    const growing = state.farm.plots.filter(p => p.plantedAt !== null).length;
+    statusEl.classList.remove('hidden');
+    statusEl.textContent = `${state.farm.workers} worker${state.farm.workers>1?'s':''} tending up to ${state.farm.workers} plot${state.farm.workers>1?'s':''} at a time — ${growing}/${owned} owned plots growing right now.`;
+  } else {
+    statusEl.classList.add('hidden');
+  }
+}
+
+const DOCK_RESTOCK_MS = 5 * 60 * 1000;
+const DOCK_STOCK_MAX = 100;
+
+function updateDockButton(){
+  if(!state) return;
+  const here = state.prices[state.locIndex];
+  const dockBtn = document.getElementById('dockBtn');
+  if(!here || !here.dock){ dockBtn.classList.add('hidden'); return; }
+  dockBtn.classList.remove('hidden');
+  dockBtn.disabled = true;
+
+  if(state.dock.stock <= 0){
+    const remaining = Math.max(0, DOCK_RESTOCK_MS - (Date.now() - state.dock.lastRestockAt));
+    const mm = Math.floor(remaining/60000);
+    const ss = Math.floor((remaining%60000)/1000).toString().padStart(2,'0');
+    dockBtn.textContent = `Ship empty — next ship in ${mm}:${ss}`;
+  } else {
+    dockBtn.textContent = `Ship docked — ${state.dock.stock} lemons available`;
+  }
+}
+
+const AFK_CYCLE_MS = 60 * 1000;
+
+function toggleAfk(){
+  if(state.afk.active){
+    state.afk.active = false;
+    addLog(`You snap out of it at Stay Sour. Earned ${fmt(state.afk.totalEarned)} total while AFK.`);
+  } else {
+    state.afk.active = true;
+    state.afk.lastCycleAt = Date.now();
+    addLog("You settle in at Stay Sour and go AFK. Lemons will move themselves, slowly.");
+  }
+  render();
+}
+
+function runAfkCycle(){
+  const lemons = 5 + Math.floor(Math.random()*11);
+  const bestPrice = Math.max(...state.prices.map(l => effSellPrice(l.price)));
+  const gross = lemons * bestPrice;
+  const pay = Math.round(gross * 0.5);
+  state.cash += pay;
+  state.afk.totalEarned += pay;
+  addLog(`While AFK: moved ${lemons} lemons at the day's best price (${fmt(bestPrice)} each), but only banked ${fmt(pay)} of it — half pay for being away.`);
+}
+
+function updateAfkButton(){
+  if(!state) return;
+  const here = state.prices[state.locIndex];
+  const afkBtn = document.getElementById('afkBtn');
+  if(!here || here.special !== 'afk'){ afkBtn.classList.add('hidden'); return; }
+  afkBtn.classList.remove('hidden');
+  afkBtn.disabled = false;
+  afkBtn.onclick = toggleAfk;
+  if(!state.afk.active){
+    afkBtn.textContent = "Start AFK (auto-earn at 50% pay)";
+  } else {
+    const remaining = Math.max(0, AFK_CYCLE_MS - (Date.now() - state.afk.lastCycleAt));
+    const ss = Math.floor(remaining/1000).toString().padStart(2,'0');
+    afkBtn.textContent = `AFK active — next payout in 0:${ss} · earned ${fmt(state.afk.totalEarned)} so far (tap to stop)`;
+  }
+}
+
+function tickTimers(){
+  if(!state || isPaused) return;
+  if(Date.now() - state.dock.lastRestockAt >= DOCK_RESTOCK_MS){
+    state.dock.stock += DOCK_STOCK_MAX;
+    state.dock.lastRestockAt = Date.now();
+    addLog(`Another ship pulled into Sourside Docks with 100 more lemons. Stock now ${state.dock.stock}.`);
+    render();
+  } else {
+    renderPlots();
+    updateDockButton();
+  }
+
+  if(state.jail.active) updateJailUI();
+
+  tickWorkerPlots();
+
+  if(state.afk.active && Date.now() - state.afk.lastCycleAt >= AFK_CYCLE_MS){
+    state.afk.lastCycleAt = Date.now();
+    runAfkCycle();
+    render();
+  } else {
+    updateAfkButton();
+  }
+}
+setInterval(tickTimers, 1000);
+
+const GAME_IDS = ['CoinFlip','HighLow','Slots','QuickDraw','LuckyNumber'];
+
+function openGameShop(){
+  document.getElementById('shopOverlay').classList.remove('hidden');
+  showGame('menu');
+}
+function closeGameShop(){
+  document.getElementById('shopOverlay').classList.add('hidden');
+}
+function showGame(id){
+  document.getElementById('shopMenu').classList.toggle('hidden', id !== 'menu');
+  GAME_IDS.forEach(g => document.getElementById('game'+g).classList.toggle('hidden', g !== id));
+}
+
+function playCoinFlip(choice){
+  const betInput = document.getElementById('coinBet');
+  const bet = Math.max(10, parseInt(betInput.value, 10) || 10);
+  const resultEl = document.getElementById('coinResult');
+  if(bet > state.cash){ resultEl.textContent = "You don't have that much cash."; return; }
+  const flip = Math.random() < 0.5 ? 'heads' : 'tails';
+  if(flip === choice){
+    state.cash += bet;
+    resultEl.textContent = `It's ${flip}! You doubled up, +${fmt(bet)}.`;
+    addLog(`Won a coin flip at the casino, +${fmt(bet)}.`);
+  } else {
+    state.cash -= bet;
+    resultEl.textContent = `It's ${flip}! You lost ${fmt(bet)}.`;
+    addLog(`Lost a coin flip at the casino, -${fmt(bet)}.`);
+  }
+  render();
+}
+
+let highlowState = null;
+function startHighLow(){
+  const resultEl = document.getElementById('highLowResult');
+  if(state.cash < 50){ resultEl.textContent = "Not enough cash."; return; }
+  state.cash -= 50;
+  const first = 1 + Math.floor(Math.random()*13);
+  highlowState = { first };
+  document.getElementById('highLowCards').textContent = `First card: ${first}`;
+  document.getElementById('highLowGuessBtns').style.display = 'flex';
+  resultEl.textContent = "";
+  render();
+}
+function guessHighLow(guess){
+  if(!highlowState) return;
+  const second = 1 + Math.floor(Math.random()*13);
+  const resultEl = document.getElementById('highLowResult');
+  if(second === highlowState.first){
+    state.cash += 50;
+    resultEl.textContent = `Card was ${second}, a push. Refunded your $50.`;
+  } else if((guess === 'higher' && second > highlowState.first) || (guess === 'lower' && second < highlowState.first)){
+    state.cash += 150;
+    resultEl.textContent = `Card was ${second}. You called it! +$150.`;
+    addLog("Won big at high-low at the casino, +$150.");
+  } else {
+    resultEl.textContent = `Card was ${second}. No good this time.`;
+    addLog("Lost a high-low bet at the casino, -$50.");
+  }
+  document.getElementById('highLowGuessBtns').style.display = 'none';
+  document.getElementById('highLowCards').textContent = "";
+  highlowState = null;
+  render();
+}
+
+const SLOT_SYMBOLS = ['🍋','🍒','🔔','7️⃣'];
+function playSlots(){
+  const cost = 75;
+  const resultEl = document.getElementById('slotsResult');
+  if(state.cash < cost){ resultEl.textContent = "Not enough cash."; return; }
+  state.cash -= cost;
+  const reels = [0,0,0].map(() => SLOT_SYMBOLS[Math.floor(Math.random()*SLOT_SYMBOLS.length)]);
+  document.getElementById('slotsReels').textContent = reels.join(' ');
+  let result = "No match. Better luck next spin.";
+  if(reels[0] === reels[1] && reels[1] === reels[2]){
+    if(reels[0] === '🍋'){
+      const gain = Math.max(0, Math.min(getCapacity() - state.stash, 40));
+      state.stash += gain;
+      result = `JACKPOT! +${gain} lemons.`;
+      addLog(`Hit triple lemons at the slots, +${gain} lemons.`);
+    } else if(reels[0] === '7️⃣'){
+      state.cash += 400;
+      result = "JACKPOT! +$400 cash.";
+      addLog("Hit triple sevens at the slots, +$400.");
+    } else {
+      state.cash += 150;
+      result = "Three of a kind! +$150 cash.";
+      addLog("Matched three at the slots, +$150.");
+    }
+  } else if(reels[0] === reels[1] || reels[1] === reels[2] || reels[0] === reels[2]){
+    state.cash += 40;
+    result = "Two match. +$40 cash.";
+  }
+  resultEl.textContent = result;
+  render();
+}
+
+let qd = { state: 'idle', startTime: 0, timeoutId: null };
+function quickDrawClick(){
+  const btn = document.getElementById('quickDrawBtn');
+  const resultEl = document.getElementById('quickDrawResult');
+  const cost = 300;
+  if(qd.state === 'idle'){
+    if(state.cash < cost){ resultEl.textContent = "Not enough cash."; return; }
+    state.cash -= cost;
+    render();
+    qd.state = 'waiting';
+    btn.textContent = "Wait...";
+    resultEl.textContent = "";
+    const delay = 1000 + Math.random()*2000;
+    qd.timeoutId = setTimeout(() => {
+      qd.state = 'go';
+      btn.textContent = "GO! TAP NOW";
+      qd.startTime = performance.now();
+    }, delay);
+  } else if(qd.state === 'waiting'){
+    clearTimeout(qd.timeoutId);
+    qd.state = 'idle';
+    btn.textContent = "Start";
+    resultEl.textContent = "Too soon! Jumped the gun. Entry fee's gone.";
+  } else if(qd.state === 'go'){
+    const rt = performance.now() - qd.startTime;
+    qd.state = 'idle';
+    btn.textContent = "Start";
+    let reward;
+    if(rt < 300) reward = 900;
+    else if(rt < 500) reward = 500;
+    else if(rt < 800) reward = 250;
+    else reward = 50;
+    state.cash += reward;
+    resultEl.textContent = `${Math.round(rt)}ms reaction. +${fmt(reward)}.`;
+    addLog(`Won ${fmt(reward)} at quick draw (${Math.round(rt)}ms).`);
+    render();
+  }
+}
+
+const SPECIAL_PRIZES = [
+  { name: "Strike Pass", weight: 1, apply: () => { state.upgrades.strikePasses += 1; } },
+  { name: "Heat Wipe", weight: 4, apply: () => { state.heat = 0; } },
+  { name: "Stash Crate (+10 capacity)", weight: 4, apply: () => { state.upgrades.bonusCapacity = (state.upgrades.bonusCapacity || 0) + 10; } },
+  { name: "Cash Jackpot ($2000)", weight: 4, apply: () => { state.cash += 2000; } },
+];
+function pickPrize(){
+  const total = SPECIAL_PRIZES.reduce((s,p) => s+p.weight, 0);
+  let r = Math.random()*total;
+  for(const p of SPECIAL_PRIZES){ if(r < p.weight) return p; r -= p.weight; }
+  return SPECIAL_PRIZES[0];
+}
+function playLuckyNumber(pick){
+  const cost = 300;
+  const resultEl = document.getElementById('luckyNumberResult');
+  if(state.cash < cost){ resultEl.textContent = "Not enough cash."; return; }
+  state.cash -= cost;
+  const draw = 1 + Math.floor(Math.random()*5);
+  if(draw === pick){
+    const prize = pickPrize();
+    prize.apply();
+    resultEl.textContent = `Number was ${draw}! You win: ${prize.name}.`;
+    addLog(`Won a ${prize.name} at lucky number!`);
+  } else {
+    resultEl.textContent = `Number was ${draw}. No prize this time.`;
+  }
+  render();
+}
+
+function sell(){
+  const q = getQty();
+  const here = state.prices[state.locIndex];
+  if(here.noSell){ addLog("You can't sell lemons here."); render(); return; }
+  if(q > state.stash){ addLog("You don't have that many lemons to sell."); render(); return; }
+  const unit = effSellPrice(here.price);
+  const revenue = q * unit;
+  const heatFactor = state.upgrades.silkRunner ? 0.7 : 1;
+  state.cash += revenue;
+  state.stash -= q;
+  state.heat = Math.min(100, state.heat + q*(here.isBlackMarket ? 0.7 : 0.35)*heatFactor);
+  addLog(`Sold ${q} lemons for ${fmt(revenue)} (${fmt(unit)} each).`);
+  render();
+  if(here.isBlackMarket){
+    const chance = Math.min(0.75, (0.13 + state.heat/150)*2);
+    if(Math.random() < chance){
+      showCopEvent("Dealing out in the open at the Black Market gets you noticed.");
+    }
+  }
+}
+
+function sellToCustomer(i){
+  const here = state.prices[state.locIndex];
+  const c = here.customers[i];
+  if(c.served) return;
+  if(state.stash < c.qty){ addLog("You don't have enough lemons to fill that order."); render(); return; }
+
+  if(c.isCop){
+    c.served = true;
+    addLog(`${c.name} flashes a badge — it was a setup!`);
+    showCopEvent(`${c.name} wasn't a customer at all.`);
+    return;
+  }
+
+  const unit = effSellPrice(c.price);
+  const revenue = c.qty * unit;
+  const heatFactor = state.upgrades.silkRunner ? 0.7 : 1;
+  state.cash += revenue;
+  state.stash -= c.qty;
+  state.heat = Math.min(100, state.heat + c.qty*0.25*heatFactor);
+  c.served = true;
+  addLog(`${c.name} took ${c.qty} lemons off your hands for ${fmt(revenue)} (${fmt(unit)} each).`);
+  render();
+}
+
+function buyFromTrader(){
+  const here = state.prices[state.locIndex];
+  const t = here.trader;
+  if(!t) return;
+  const total = t.qty * t.price;
+  if(state.cash < total){ addLog("Not enough cash for the trader's stock."); render(); return; }
+  if(state.stash + t.qty > getCapacity()){ addLog("Your stash can't hold that much."); render(); return; }
+  state.cash -= total;
+  state.stash += t.qty;
+  addLog(`Bought ${t.qty} lemons off ${t.name} for ${fmt(total)} (${fmt(t.price)} each).`);
+  here.trader = null;
+  render();
+}
+
+function travel(i){
+  state.locIndex = i;
+  state.day += 1;
+  let decay = state.upgrades.heatSink ? 16 : 8;
+  if(LOCATIONS[i].special === 'coolDown') decay += 10;
+  state.heat = Math.max(0, state.heat - decay);
+  state.prices = freshPrices(state.heat);
+  const destRisk = LOCATIONS[i].risk;
+  const chance = destRisk <= 0 ? 0 : Math.min(0.78, 0.04 + (state.heat/100) * destRisk);
+  addLog(`Traveled to ${LOCATIONS[i].name}.`);
+
+  if(Math.random() < chance){
+    showCopEvent();
+  } else {
+    render();
+  }
+}
+
+const COP_TYPES = [
+  {name:"Rookie Officer",     speedMult:1.05, lives:2, weight:4},
+  {name:"Beat Cop",           speedMult:1.35, lives:2, weight:4},
+  {name:"Veteran Detective",  speedMult:1.65, lives:1, weight:2},
+  {name:"Captain Zest",       speedMult:2.0,  lives:1, weight:1},
+];
+
+function pickCopType(risk){
+  const danger = state.heat + (risk || 1)*30;
+  let pool;
+  if(danger > 90) pool = COP_TYPES.slice(2);
+  else if(danger > 50) pool = COP_TYPES.slice(1);
+  else pool = COP_TYPES;
+  const total = pool.reduce((s,c) => s+c.weight, 0);
+  let r = Math.random()*total;
+  for(const c of pool){ if(r < c.weight) return c; r -= c.weight; }
+  return pool[0];
+}
+
+function showCopEvent(customText){
+  const risk = state.prices[state.locIndex].risk;
+  state.currentRisk = risk;
+  state.currentCop = pickCopType(risk);
+  const base = customText ||
+    (state.stash > 0
+      ? `A patrol spots ${state.stash} lemons in your bag.`
+      : `A patrol stops you, but your bag looks clean.`);
+  document.getElementById('copText').textContent = `${state.currentCop.name}. ${base}`;
+  document.getElementById('copOverlay').classList.remove('hidden');
+}
+
+function resolveCop(choice){
+  document.getElementById('copOverlay').classList.add('hidden');
+  if(choice === 'hide'){
+    addLog(`You dump all ${state.stash} lemons and ${fmt(state.cash)} cash to walk away clean.`);
+    state.stash = 0;
+    state.cash = 0;
+    state.heat = Math.max(0, state.heat - 15);
+  }
+  render();
+}
+
+let run = null;
+
+function startRunGame(){
+  document.getElementById('copOverlay').classList.add('hidden');
+  const cop = state.currentCop || pickCopType(state.currentRisk || 1);
+  const risk = state.currentRisk || 1;
+  const riskFactor = 1 + Math.max(0, risk-1)*0.2;
+  document.getElementById('runCopLabel').textContent = `${cop.name} is on you.`;
+  run = {
+    lane: 1, displayLane: 1, jumping:false, jumpT:0, lives:cop.lives, maxLives:cop.lives,
+    obstacles: [], distance:0, target:1450, bonus:0,
+    speed: 190*cop.speedMult*riskFactor, copSpeedMult: cop.speedMult*riskFactor, elapsed:0,
+    spawnTimer:0, last:null, active:true, hitFlash:0
+  };
+  document.getElementById('runOverlay').classList.remove('hidden');
+  updateRunHud();
+  drawRun();
+  requestAnimationFrame(runLoop);
+}
+
+function updateRunHud(){
+  document.getElementById('runLives').textContent = 'Lives: ' + '♥'.repeat(run.lives) + '♡'.repeat(run.maxLives-run.lives);
+  document.getElementById('runDist').textContent = Math.min(100, Math.round(run.distance/run.target*100)) + '%';
+}
+
+function spawnObstacle(){
+  const lane = Math.floor(Math.random()*3);
+  const roll = Math.random();
+  const type = roll < 0.07 ? 'lemon' : (roll < 0.5 ? 'crate' : 'log');
+  run.obstacles.push({lane, type, y:-40, hit:false});
+}
+
+function runLoop(ts){
+  if(!run || !run.active) return;
+  if(run.last === null) run.last = ts;
+  const dt = Math.min(0.05, (ts-run.last)/1000);
+  run.last = ts;
+  run.elapsed += dt;
+
+  run.speed = Math.min(720, (220 + state.heat*2.4 + run.elapsed*24) * run.copSpeedMult);
+  run.distance += run.speed*dt;
+  run.displayLane += (run.lane - run.displayLane) * Math.min(1, dt*12);
+  if(run.hitFlash > 0) run.hitFlash = Math.max(0, run.hitFlash - dt*3);
+
+  run.spawnTimer += dt*1000;
+  const interval = Math.max(130, 380 - run.elapsed*22);
+  if(run.spawnTimer > interval){
+    run.spawnTimer = 0;
+    spawnObstacle();
+  }
+
+  if(run.jumping){
+    run.jumpT += dt;
+    if(run.jumpT > 0.5){ run.jumping = false; run.jumpT = 0; }
+  }
+
+  const playerY = 350;
+  for(let i=run.obstacles.length-1;i>=0;i--){
+    const o = run.obstacles[i];
+    o.y += run.speed*dt;
+    if(!o.hit && o.y > playerY && o.y < playerY+50 && o.lane === run.lane){
+      if(o.type === 'lemon'){
+        o.hit = true;
+        run.bonus += 1;
+      } else if(!(o.type === 'log' && run.jumping)){
+        o.hit = true;
+        run.hitFlash = 1;
+        run.lives -= 1;
+        if(run.lives <= 0){ endRunGame(false); return; }
+      }
+    }
+    if(o.y > 460) run.obstacles.splice(i,1);
+  }
+
+  if(run.distance >= run.target){ endRunGame(true); return; }
+
+  drawRun();
+  updateRunHud();
+  requestAnimationFrame(runLoop);
+}
+
+function drawRun(){
+  const cv = document.getElementById('runCanvas');
+  const ctx = cv.getContext('2d');
+  ctx.clearRect(0,0,300,420);
+  ctx.fillStyle = '#0f0c18';
+  ctx.fillRect(0,0,300,420);
+  const laneX = [50,150,250];
+
+  ctx.strokeStyle = '#3a3350';
+  ctx.lineWidth = 2;
+  ctx.setLineDash([16,14]);
+  ctx.lineDashOffset = -(run.distance % 30);
+  [100,200].forEach(x=>{ ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,420); ctx.stroke(); });
+  ctx.setLineDash([]);
+
+  run.obstacles.forEach(o=>{
+    if(o.hit) return;
+    const x = laneX[o.lane];
+    if(o.type === 'crate'){
+      ctx.fillStyle = '#c9b93e';
+      ctx.fillRect(x-22, o.y-16, 44, 32);
+    } else if(o.type === 'log'){
+      ctx.fillStyle = '#e6484f';
+      ctx.fillRect(x-26, o.y-6, 52, 12);
+    } else {
+      ctx.fillStyle = '#4ecdc4';
+      ctx.beginPath();
+      ctx.arc(x, o.y, 10, 0, Math.PI*2);
+      ctx.fill();
+    }
+  });
+
+  const px = 50 + run.displayLane*100;
+  const py = 350 - (run.jumping ? 40*Math.sin(Math.PI*Math.min(1, run.jumpT/0.5)) : 0);
+  ctx.fillStyle = '#f4e04d';
+  ctx.beginPath();
+  ctx.ellipse(px, py, 16, 20, 0, 0, Math.PI*2);
+  ctx.fill();
+
+  if(run.hitFlash > 0){
+    ctx.fillStyle = `rgba(230,72,79,${run.hitFlash*0.35})`;
+    ctx.fillRect(0,0,300,420);
+  }
+}
+
+function moveLane(dir){
+  if(!run || !run.active) return;
+  run.lane = Math.max(0, Math.min(2, run.lane+dir));
+}
+function jump(){
+  if(!run || !run.active) return;
+  if(!run.jumping){ run.jumping = true; run.jumpT = 0; }
+}
+
+const JAIL_UNLOCK_MS = 2 * 60 * 1000;
+const JAIL_METHODS = ['brick', 'footsteps', 'code', 'cellmate', 'bribe'];
+
+function jailCanAttempt(){
+  return state.jail.active && Date.now() - state.jail.enteredAt >= JAIL_UNLOCK_MS;
+}
+
+function pickJailMethod(){
+  const pool = state.jail.lastMethodId
+    ? JAIL_METHODS.filter(m => m !== state.jail.lastMethodId)
+    : JAIL_METHODS;
+  return pool[Math.floor(Math.random()*pool.length)];
+}
+
+function setupJailMethod(method){
+  const el = document.getElementById('jailSecretArea');
+  el.innerHTML = '';
+  state.jail.mech = {};
+  const dotStyle = "cursor:pointer; opacity:0.16;";
+  const flavorStyle = "font-size:13px; line-height:1.7; margin-bottom:6px;";
+
+  if(method === 'brick'){
+    el.innerHTML = `<p style="${flavorStyle}">The walls here are old stone, patched with concrete decades ago. Damp, flaking, cold in the same three spots every night. Something always gives eventually<span id="jailDot" style="${dotStyle}"> .</span> if you keep at it.</p>`;
+    state.jail.mech.progress = 0;
+    document.getElementById('jailDot').onclick = () => {
+      if(!jailCanAttempt()) return;
+      state.jail.mech.progress++;
+      if(state.jail.mech.progress >= 5) releaseFromJail("worked a brick loose and squeezed through the gap");
+    };
+
+  } else if(method === 'footsteps'){
+    el.innerHTML = `
+      <p style="${flavorStyle}">Boots on concrete, somewhere down the hall. They never seem to be in much of a hurry.</p>
+      <p style="font-size:13px; color:var(--yellow-dim); margin-bottom:10px;" id="jailFootStatus">...listening...</p>
+      <p style="font-size:11px; color:var(--border); text-align:right;">the door hinge <span id="jailDot" style="${dotStyle}">creaks</span></p>`;
+    state.jail.mech.progress = 0;
+    state.jail.mech.phase = 'far';
+    const flip = () => {
+      if(!state.jail.active) return;
+      state.jail.mech.phase = state.jail.mech.phase === 'far' ? 'near' : 'far';
+      const statusEl = document.getElementById('jailFootStatus');
+      if(statusEl) statusEl.textContent = state.jail.mech.phase === 'far' ? "...footsteps fading..." : "...footsteps getting closer...";
+      state.jail.mech.timer = setTimeout(flip, 2000 + Math.random()*2500);
+    };
+    flip();
+    document.getElementById('jailDot').onclick = () => {
+      if(!jailCanAttempt()) return;
+      if(state.jail.mech.phase === 'far'){
+        state.jail.mech.progress++;
+        if(state.jail.mech.progress >= 3) releaseFromJail("slipped out while the guard was elsewhere");
+      } else {
+        state.jail.mech.progress = 0;
+      }
+    };
+
+  } else if(method === 'code'){
+    const digits = [1+Math.floor(Math.random()*9), 1+Math.floor(Math.random()*9), 1+Math.floor(Math.random()*9)];
+    state.jail.mech.code = digits.join('');
+    el.innerHTML = `
+      <p style="${flavorStyle}">Someone scratched marks into the corner of the bunk frame, years of hands wearing them half smooth.</p>
+      <p style="font-size:22px; letter-spacing:8px; color:var(--text2); filter:blur(3px); transition:filter 0.4s; margin-bottom:12px;"
+         onmouseover="this.style.filter='blur(0px)'" onmouseout="this.style.filter='blur(3px)'">${digits.join('  ')}</p>
+      <input type="text" id="jailCodeInput" maxlength="3" placeholder="..."
+        style="width:70px; background:var(--panel2); border:1px solid var(--border); color:var(--text); border-radius:4px; padding:7px; font-family:'Consolas',monospace;">`;
+    document.getElementById('jailCodeInput').addEventListener('keydown', (e) => {
+      if(e.key !== 'Enter') return;
+      if(!jailCanAttempt()) return;
+      if(e.target.value.trim() === state.jail.mech.code){
+        releaseFromJail("picked the lock with a code scratched into the bunk frame");
+      }
+    });
+
+  } else if(method === 'cellmate'){
+    el.innerHTML = `<p style="${flavorStyle}">The guy in the next cell hums the same four notes every night. Eventually he starts talking<span id="jailDot" style="${dotStyle}">,</span> if you listen between his words long enough.</p>`;
+    state.jail.mech.progress = 0;
+    state.jail.mech.lastClick = 0;
+    document.getElementById('jailDot').onclick = () => {
+      if(!jailCanAttempt()) return;
+      const now = Date.now();
+      if(now - state.jail.mech.lastClick < 12000) return;
+      state.jail.mech.lastClick = now;
+      state.jail.mech.progress++;
+      if(state.jail.mech.progress >= 3) releaseFromJail("got the cellmate to walk you through the guard's blind spot");
+    };
+
+  } else if(method === 'bribe'){
+    el.innerHTml = '';
+    el.innerHTML = `<p style="${flavorStyle}">The night guard keeps checking his phone, looking more stressed about it than a phone should make anyone look<span id="jailDot" style="${dotStyle}">.</span></p>`;
+    state.jail.mech.progress = 0;
+    state.jail.mech.revealed = false;
+    document.getElementById('jailDot').onclick = () => {
+      if(!jailCanAttempt()) return;
+      state.jail.mech.progress++;
+      if(state.jail.mech.progress >= 2 && !state.jail.mech.revealed){
+        state.jail.mech.revealed = true;
+        const btn = document.createElement('button');
+        btn.textContent = 'Offer to cover his tab — $3000';
+        btn.className = 'sell';
+        btn.style.width = '100%';
+        btn.style.marginTop = '10px';
+        btn.onclick = () => {
+          if(state.cash < 3000){ addLog("Not enough cash to make the offer."); return; }
+          state.cash -= 3000;
+          releaseFromJail("paid off a guard with a gambling habit");
+        };
+        el.appendChild(btn);
+      }
+    };
+  }
+}
+
+function enterJail(lemons){
+  if(state.jail.mech && state.jail.mech.timer) clearTimeout(state.jail.mech.timer);
+  state.jail.active = true;
+  state.jail.enteredAt = Date.now();
+  state.jail.sentenceMs = lemons * 60000;
+  document.getElementById('jailFlavor').textContent =
+    `Caught with ${lemons} lemon${lemons===1?'':'s'} on you. Booked for ${lemons} minute${lemons===1?'':'s'}.`;
+  const method = pickJailMethod();
+  state.jail.lastMethodId = method;
+  setupJailMethod(method);
+  document.getElementById('jailOverlay').classList.remove('hidden');
+  updateJailUI();
+}
+
+function updateJailUI(){
+  if(!state || !state.jail.active) return;
+  const remaining = Math.max(0, state.jail.sentenceMs - (Date.now() - state.jail.enteredAt));
+  if(remaining <= 0){ releaseFromJail("served your time"); return; }
+  const mm = Math.floor(remaining/60000);
+  const ss = Math.floor((remaining%60000)/1000).toString().padStart(2,'0');
+  const timerEl = document.getElementById('jailTimer');
+  if(timerEl) timerEl.textContent = `${mm}:${ss} remaining`;
+}
+
+function releaseFromJail(reason){
+  if(state.jail.mech && state.jail.mech.timer) clearTimeout(state.jail.mech.timer);
+  state.jail.active = false;
+  if(reason === "served your time"){
+    state.timesServedFull = (state.timesServedFull || 0) + 1;
+  }
+  document.getElementById('jailOverlay').classList.add('hidden');
+  addLog(`Released from jail — ${reason}.`);
+  render();
+}
+
+function endRunGame(success){
+  run.active = false;
+  document.getElementById('runOverlay').classList.add('hidden');
+  if(success){
+    const hitsTaken = run.maxLives - run.lives;
+    const heatGain = Math.max(0, 10 + hitsTaken*5 - run.bonus*3);
+    state.heat = Math.min(100, state.heat + heatGain);
+    const bonusNote = run.bonus > 0 ? ` Grabbed ${run.bonus} stray lemon${run.bonus>1?'s':''} on the way.` : "";
+    addLog((hitsTaken === 0 ? "Clean getaway. You lose them in the crowd." : "You shake the tail, but barely.") + bonusNote);
+    render();
+  } else {
+    if(state.upgrades.strikePasses > 0){
+      state.upgrades.strikePasses -= 1;
+      addLog("Caught red-handed, but you flash a strike pass and walk.");
+      render();
+    } else {
+      const lemonsAtCapture = state.stash;
+      state.stash = 0;
+      state.strikes += 1;
+      if(lemonsAtCapture <= 0){
+        addLog("Caught empty-handed. They let you go with a warning.");
+        render();
+      } else {
+        render();
+        enterJail(lemonsAtCapture);
+      }
+    }
+  }
+}
+
+document.addEventListener('keydown', (e) => {
+  if(!run || !run.active) return;
+  if(e.key === 'ArrowLeft'){ e.preventDefault(); moveLane(-1); }
+  else if(e.key === 'ArrowRight'){ e.preventDefault(); moveLane(1); }
+  else if(e.key === 'ArrowUp' || e.key === ' '){ e.preventDefault(); jump(); }
+});
+document.getElementById('runLeftBtn').onclick = () => moveLane(-1);
+document.getElementById('runRightBtn').onclick = () => moveLane(1);
+document.getElementById('runJumpBtn').onclick = jump;
+
+function endGame(jailed){
+  document.getElementById('endTitle').textContent = jailed ? "BUSTED" : "GAME OVER";
+  document.getElementById('endCash').textContent = fmt(state.cash);
+  document.getElementById('endText').textContent = jailed
+    ? "One strike and Zest Enforcement hauls you in. Final cash on hand:"
+    : `Twenty days on the streets. Final cash on hand:`;
+  document.getElementById('endOverlay').classList.remove('hidden');
+}
+
+document.getElementById('buyBtn').onclick = buy;
+document.getElementById('sellBtn').onclick = sell;
+document.getElementById('launderBtn').onclick = launderHeat;
+document.getElementById('fenceBtn').onclick = fenceStash;
+document.getElementById('shopBtn').onclick = openGameShop;
+document.getElementById('runBtn').onclick = startRunGame;
+document.getElementById('hideBtn').onclick = () => resolveCop('hide');
+document.getElementById('restartBtn').onclick = () => {
+  document.getElementById('endOverlay').classList.add('hidden');
+  newGame();
+};
+
+function openLeaderboard(){
+  document.getElementById('leaderboardOverlay').classList.remove('hidden');
+  refreshLeaderboard();
+}
+function closeLeaderboard(){
+  document.getElementById('leaderboardOverlay').classList.add('hidden');
+}
+
+const FIREBASE_URL = 'https://sour-money-default-rtdb.firebaseio.com';
+const LB_LOCAL_KEY = 'sourMoneyLeaderboardLocal';
+
+function lbSafeKey(name){
+  return name.replace(/[.#$\[\]\/]/g, '_') || 'Anonymous';
+}
+
+function lbLocalGetAll(){
+  try{ return JSON.parse(localStorage.getItem(LB_LOCAL_KEY) || '{}'); }
+  catch(e){ return {}; }
+}
+
+function lbLocalSet(key, entry){
+  const map = lbLocalGetAll();
+  map[key] = entry;
+  try{ localStorage.setItem(LB_LOCAL_KEY, JSON.stringify(map)); }
+  catch(e){ /* ignore — best effort backup only */ }
+}
+
+async function uploadToLeaderboard(){
+  const statusEl = document.getElementById('lbStatus');
+  const name = (document.getElementById('lbNameInput').value || '').trim().slice(0,20) || 'Anonymous';
+  const key = lbSafeKey(name);
+  const entry = {
+    name,
+    cash: state.cash,
+    day: state.day,
+    jailedNoEscape: state.timesServedFull || 0,
+    totalJailed: state.strikes || 0,
+    uploadedAt: Date.now()
+  };
+  statusEl.textContent = "Uploading...";
+  try{
+    const res = await fetch(`${FIREBASE_URL}/leaderboard/${key}.json`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(entry)
+    });
+    if(!res.ok) throw new Error('Firebase write failed: ' + res.status);
+    statusEl.textContent = `Uploaded as "${name}" to the worldwide leaderboard.`;
+    refreshLeaderboard();
+  } catch(e){
+    lbLocalSet(key, entry);
+    statusEl.textContent = `Couldn't reach the worldwide leaderboard — saved locally instead.`;
+    refreshLeaderboard();
+  }
+}
+
+async function refreshLeaderboard(){
+  const statusEl = document.getElementById('lbStatus');
+  statusEl.textContent = "Loading...";
+  try{
+    const res = await fetch(`${FIREBASE_URL}/leaderboard.json`);
+    if(!res.ok) throw new Error('Firebase read failed: ' + res.status);
+    const data = await res.json();
+    const entries = data ? Object.values(data) : [];
+    renderLeaderboardLists(entries);
+    statusEl.textContent = `${entries.length} world${entries.length===1?'':'s'} on the worldwide board.`;
+  } catch(e){
+    const localEntries = Object.values(lbLocalGetAll());
+    renderLeaderboardLists(localEntries);
+    statusEl.textContent = `Couldn't reach the worldwide leaderboard — showing ${localEntries.length} locally saved entr${localEntries.length===1?'y':'ies'} instead.`;
+  }
+}
+
+function ordinal(n){
+  const s = ["th","st","nd","rd"];
+  const v = n % 100;
+  return n + (s[(v-20)%10] || s[v] || s[0]);
+}
+
+function renderLeaderboardLists(entries){
+  const fill = (id, list, getLine) => {
+    const el = document.getElementById(id);
+    el.innerHTML = list.length
+      ? list.map((e,i) => `<div>${ordinal(i+1)}, ${e.name}, with ${getLine(e)}</div>`).join('')
+      : '<div style="color:var(--border);">No entries yet.</div>';
+  };
+  fill('lbMoney', [...entries].sort((a,b) => b.cash - a.cash).slice(0,3), e => `${fmt(e.cash)}`);
+  fill('lbDays', [...entries].sort((a,b) => b.day - a.day).slice(0,3), e => `${e.day} days`);
+  fill('lbJailed', [...entries].sort((a,b) => (b.jailedNoEscape||0) - (a.jailedNoEscape||0)).slice(0,3), e => `${e.jailedNoEscape||0} time${e.jailedNoEscape===1?'':'s'} jailed`);
+}
+
+let isPaused = false;
+let pauseStartedAt = 0;
+
+function pauseGame(){
+  if(isPaused || !state) return;
+  isPaused = true;
+  pauseStartedAt = Date.now();
+  document.getElementById('pauseOverlay').classList.remove('hidden');
+}
+
+function resumeGame(){
+  if(!isPaused) return;
+  const pausedMs = Date.now() - pauseStartedAt;
+  isPaused = false;
+  if(state){
+    state.dock.lastRestockAt += pausedMs;
+    state.afk.lastCycleAt += pausedMs;
+    if(state.jail.active) state.jail.enteredAt += pausedMs;
+    state.farm.plots.forEach(p => { if(p.plantedAt !== null) p.plantedAt += pausedMs; });
+  }
+  document.getElementById('pauseOverlay').classList.add('hidden');
+  render();
+}
+
+const SAVE_KEY = 'sourMoneySave_v1';
+
+function saveGame(){
+  try{ localStorage.setItem(SAVE_KEY, JSON.stringify(state)); }
+  catch(e){ /* storage unavailable in this context — that's fine, just no auto-save */ }
+}
+
+function sanitizeState(s){
+  s.upgrades = Object.assign({ biggerStashLvl:0, silkRunner:false, heatSink:false, strikePasses:0, fortune:false, bonusCapacity:0 }, s.upgrades || {});
+  const defaultPlots = Array.from({length:10}, (_,i) => ({ owned: i === 0, plantedAt: null }));
+  s.farm = Object.assign({ workers:0, plots: defaultPlots }, s.farm || {});
+  if(!Array.isArray(s.farm.plots) || s.farm.plots.length === 0){
+    s.farm.plots = defaultPlots;
+    if(s.farm.planted) s.farm.plots[0].plantedAt = s.farm.plantedAt || Date.now();
+  }
+  while(s.farm.plots.length < 10) s.farm.plots.push({ owned:false, plantedAt:null });
+  s.dock = Object.assign({ stock:100, lastRestockAt:Date.now() }, s.dock || {});
+  s.jail = Object.assign({ active:false, enteredAt:0, sentenceMs:0, lastMethodId:null, mech:{} }, s.jail || {});
+  s.afk = Object.assign({ active:false, lastCycleAt:Date.now(), totalEarned:0 }, s.afk || {});
+  if(!Array.isArray(s.log)) s.log = [];
+  if(typeof s.timesServedFull !== 'number') s.timesServedFull = 0;
+  if(!s.prices) s.prices = freshPrices(s.heat || 0);
+  return s;
+}
+
+function loadGame(){
+  let raw = null;
+  try{ raw = localStorage.getItem(SAVE_KEY); } catch(e){ return null; }
+  if(!raw) return null;
+  try{ return sanitizeState(JSON.parse(raw)); } catch(e){ return null; }
+}
+
+function newGameConfirm(){
+  if(confirm("Start a brand new game? This wipes your current save unless you've exported a code first.")){
+    try{ localStorage.removeItem(SAVE_KEY); } catch(e){}
+    document.getElementById('jailOverlay').classList.add('hidden');
+    document.getElementById('saveCodeArea').classList.add('hidden');
+    document.getElementById('importBox').classList.add('hidden');
+    newGame();
+  }
+}
+
+function exportSave(){
+  const code = btoa(encodeURIComponent(JSON.stringify(state)));
+  const area = document.getElementById('saveCodeArea');
+  area.value = code;
+  area.classList.remove('hidden');
+  area.focus();
+  area.select();
+  let copied = false;
+  try{ copied = document.execCommand('copy'); } catch(e){}
+  document.getElementById('saveStatus').textContent = copied
+    ? "Copied to clipboard."
+    : "Select the text below and copy it.";
+}
+
+function toggleImportBox(){
+  document.getElementById('importBox').classList.toggle('hidden');
+}
+
+function importSave(){
+  const code = document.getElementById('importCodeArea').value.trim();
+  if(!code) return;
+  try{
+    const loaded = sanitizeState(JSON.parse(decodeURIComponent(atob(code))));
+    state = loaded;
+    document.getElementById('importBox').classList.add('hidden');
+    document.getElementById('saveCodeArea').classList.add('hidden');
+    addLog("Save imported successfully. Welcome back.");
+    render();
+  } catch(e){
+    document.getElementById('saveStatus').textContent = "That save code didn't load — check it's complete.";
+  }
+}
+
+(function init(){
+  const loaded = loadGame();
+  if(loaded){
+    state = loaded;
+    render();
+    addLog("Welcome back — your saved game was loaded.");
+    if(state.jail.active){
+      document.getElementById('jailFlavor').textContent = "Still doing time. The sentence didn't pause while you were gone.";
+      setupJailMethod(state.jail.lastMethodId || pickJailMethod());
+      document.getElementById('jailOverlay').classList.remove('hidden');
+      updateJailUI();
+    }
+  } else {
+    newGame();
+  }
+})();
+</script>
+</body>
+</html>
